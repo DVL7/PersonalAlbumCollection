@@ -1,0 +1,47 @@
+# Build artifacts
+**/[Bb]in/
+**/[Oo]bj/
+out/
+artifacts/
+publish/
+TestResults/
+coverage/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/packages/
+/packages/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Rider / ReSharper
+.idea/
+*.iml
+_ReSharper*/
+*.DotSettings.user
+riderModule.iml
+
+# Logs and temp
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Local environment / secrets
+.env
+.env.*
+appsettings.Local.json
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini

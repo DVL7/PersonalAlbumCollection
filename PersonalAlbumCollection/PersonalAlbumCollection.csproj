@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Folder Include="Components\Shared\" />
+      <Folder Include="Data\Configurations\" />
+      <Folder Include="Data\Migrations\" />
+      <Folder Include="Data\Seed\" />
+      <Folder Include="DTOs\" />
+      <Folder Include="Extensions\" />
+      <Folder Include="Featues\Albums\" />
+      <Folder Include="Featues\Auth\" />
+      <Folder Include="Featues\Ratings\" />
+      <Folder Include="Models\Entities\" />
+      <Folder Include="Models\Enums\" />
+      <Folder Include="Services\Implementations\" />
+      <Folder Include="Services\Interfaces\" />
+      <Folder Include="Validators\" />
+    </ItemGroup>
+
+</Project>

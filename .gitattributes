@@ -1,0 +1,22 @@
+# Normalize text files across platforms/IDEs
+* text=auto eol=lf
+
+# Windows-specific scripts and solution file
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sln text eol=crlf
+
+# Unix scripts
+*.sh text eol=lf
+
+# Common binaries
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.7z binary
+*.dll binary
+*.exe binary
