@@ -38,7 +38,7 @@ riderModule.iml
 # Local environment / secrets
 .env
 .env.*
-appsettings.Local.json
+appsettings.Development.json
 
 # OS files
 .DS_Store
