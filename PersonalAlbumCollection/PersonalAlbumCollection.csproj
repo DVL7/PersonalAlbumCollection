@@ -17,8 +17,6 @@
       <Folder Include="Features\Albums\" />
       <Folder Include="Features\Auth\" />
       <Folder Include="Features\Ratings\" />
-      <Folder Include="Models\Entities\" />
-      <Folder Include="Models\Enums\" />
       <Folder Include="Services\Implementations\" />
       <Folder Include="Services\Interfaces\" />
       <Folder Include="Validators\" />

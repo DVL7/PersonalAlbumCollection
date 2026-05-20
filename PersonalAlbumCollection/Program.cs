@@ -17,6 +17,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
+// Test połączenia z bazą danych
+/*
+using var scope = app.Services.CreateScope();
+var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+if (!db.Database.CanConnect())
+{
+    throw new InvalidOperationException("Brak polaczenia z baza danych.");
+}
+else
+{
+    Console.WriteLine("Połączono z bazą danych!");
+}
+*/
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
