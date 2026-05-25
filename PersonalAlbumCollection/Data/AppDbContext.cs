@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PersonalAlbumCollection.Models.Entities;
+using PersonalAlbumCollection.Models.Enums;
 
 namespace PersonalAlbumCollection.Data;
 
@@ -22,7 +23,7 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // DEFINIOWANIE FK 
+        // Define FK
         //  AlbumArtist 
         modelBuilder.Entity<AlbumArtist>()
             .HasKey(x => new { x.AlbumId, x.ArtistId });
@@ -65,7 +66,7 @@ public class AppDbContext : DbContext
             .WithMany(x => x.UserAlbums)
             .HasForeignKey(x => x.AlbumId);
         
-        // WALIDACJA PÓL
+        // Validation
         // Album 
         modelBuilder.Entity<Album>(entity =>
         {
@@ -145,6 +146,78 @@ public class AppDbContext : DbContext
                 
         });
 
+        // Seeders
+        modelBuilder.Entity<Genre>().HasData(
+            new Genre { Id = 1, Name = "Rock" },
+            new Genre { Id = 2, Name = "Pop" },
+            new Genre { Id = 3, Name = "Rap" },
+            new Genre { Id = 4, Name = "Hip Hop" },
+            new Genre { Id = 5, Name = "Jazz" },
+            new Genre { Id = 6, Name = "Blues" },
+            new Genre { Id = 7, Name = "Metal" }
+        );
 
+        modelBuilder.Entity<Artist>().HasData(
+            new Artist
+            {
+                Id = 1,
+                Name = "Michael Jackson",
+                ArtistType = ArtistType.SoloArtist,
+                Country = "USA",
+                Description = "Krol popu, znany z albumu \"Thriller\" i widowiskowych wystepow.",
+                CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new Artist
+            {
+                Id = 2,
+                Name = "The Beatles",
+                ArtistType = ArtistType.Band,
+                Country = "Wielka Brytania",
+                Description = "Legendarny zespol z Liverpoolu, ktory zrewolucjonizowal muzyke lat 60.",
+                CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new Artist
+            {
+                Id = 3,
+                Name = "Freddie Mercury",
+                ArtistType = ArtistType.SoloArtist,
+                Country = "Wielka Brytania",
+                Description = "Charyzmatyczny wokalista Queen i autor wielu klasycznych utworow.",
+                CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            }
+        );
+
+        modelBuilder.Entity<Album>().HasData(
+            new Album
+            {
+                Id = 1,
+                Title = "Thriller",
+                ReleaseYear = 1982,
+                Description = "Ikoniczny album popowy, uznawany za jeden z najlepiej sprzedajacych sie w historii.",
+                CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new Album
+            {
+                Id = 2,
+                Title = "Abbey Road",
+                ReleaseYear = 1969,
+                Description = "Klasyczny album The Beatles, znany m.in. z utworu \"Come Together\".",
+                CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new Album
+            {
+                Id = 3,
+                Title = "Mr. Bad Guy",
+                ReleaseYear = 1985,
+                Description = "Solowy album Freddie'go Mercury'ego, prezentujacy jego indywidualny styl.",
+                CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            }
+        );
+
+        modelBuilder.Entity<AlbumArtist>().HasData(
+            new AlbumArtist { AlbumId = 1, ArtistId = 1, DisplayOrder = 1 },
+            new AlbumArtist { AlbumId = 2, ArtistId = 2, DisplayOrder = 1 },
+            new AlbumArtist { AlbumId = 3, ArtistId = 3, DisplayOrder = 1 }
+        );
     }
 }

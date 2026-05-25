@@ -1,5 +1,5 @@
 using PersonalAlbumCollection.Components;
-using PersonalAlbumCollection.Data; 
+using PersonalAlbumCollection.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
