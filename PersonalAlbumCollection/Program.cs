@@ -8,10 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Connection string do połączenia bazą danych
+// DataBase connection string 
 builder.Configuration.GetConnectionString("DefaultConnection");
 
-// 
+// Add AppDbContext 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 

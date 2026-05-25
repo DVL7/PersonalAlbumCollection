@@ -1,5 +1,3 @@
-using PersonalAlbumCollection.Models.Enums;
-
 namespace PersonalAlbumCollection.Models.Entities;
 
 public class AlbumArtist

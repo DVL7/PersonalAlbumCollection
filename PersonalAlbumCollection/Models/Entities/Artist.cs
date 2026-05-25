@@ -13,6 +13,9 @@ public class Artist
     public string? Country { get; set; }
 
     public string? Description { get; set; }
-
+    
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
     public ICollection<AlbumArtist> AlbumArtists { get; set; } = new List<AlbumArtist>();
+    
 }
