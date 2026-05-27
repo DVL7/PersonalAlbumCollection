@@ -1,6 +1,8 @@
 using PersonalAlbumCollection.Components;
 using PersonalAlbumCollection.Data;
 using Microsoft.EntityFrameworkCore;
+using PersonalAlbumCollection.Services.Implementations;
+using PersonalAlbumCollection.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,15 @@ builder.Configuration.GetConnectionString("DefaultConnection");
 // Add AppDbContext 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add Services
+builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IAlbumService, AlbumService>();
+builder.Services.AddScoped<IArtistService, ArtistService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserAlbumService, UserAlbumService>();
+
+
 
 var app = builder.Build();
 

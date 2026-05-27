@@ -11,17 +11,15 @@
       <Folder Include="Components\Shared\" />
       <Folder Include="Data\Configurations\" />
       <Folder Include="Data\Seed\" />
-      <Folder Include="DTOs\" />
       <Folder Include="Extensions\" />
       <Folder Include="Features\Albums\" />
       <Folder Include="Features\Auth\" />
       <Folder Include="Features\Ratings\" />
-      <Folder Include="Services\Implementations\" />
-      <Folder Include="Services\Interfaces\" />
       <Folder Include="Validators\" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         <PrivateAssets>all</PrivateAssets>

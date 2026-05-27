@@ -1,0 +1,32 @@
+﻿@page "/genres"
+@using PersonalAlbumCollection.DTOs
+@inject IGenreService GenreService
+
+<h3>Lista gatunków</h3>
+
+@if (genres is null)
+{
+    <p>Ładowanie...</p>
+}
+else if (genres.Count == 0)
+{
+    <p>Brak gatunków.</p>
+}
+else
+{
+    <ul>
+        @foreach (var genre in genres)
+        {
+            <li>@genre.Name</li>
+        }
+    </ul>
+}
+
+@code {
+    private List<GenreDto>? genres;
+
+    protected override async Task OnInitializedAsync()
+    {
+        genres = await GenreService.GetAllAsync();
+    }
+}
