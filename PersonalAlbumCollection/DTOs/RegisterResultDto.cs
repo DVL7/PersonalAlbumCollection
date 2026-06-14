@@ -1,8 +1,17 @@
+// RegisterResultDto.cs
+
 namespace PersonalAlbumCollection.DTOs;
 
-public class RegisterResultDto
+/// <summary>
+/// DTO reprezentujące wynik rejestracji użytkownika.
+/// Rozszerza AccountResultDto o identyfikator nowo utworzonego użytkownika.
+/// Używane przez AuthService.RegisterAsync().
+/// </summary>
+public class RegisterResultDto : AccountResultDto
 {
-    public bool Success { get; set; }
+    /// <summary>
+    /// Id nowo utworzonego użytkownika.
+    /// Wypełniony gdy Success = true, null gdy rejestracja się nie powiodła.
+    /// </summary>
     public int? UserId { get; set; }
-    public string? ErrorMessage { get; set; }
 }
