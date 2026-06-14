@@ -9,7 +9,7 @@ using PersonalAlbumCollection.Data;
 
 #nullable disable
 
-namespace PersonalAlbumCollection.Data.Seed
+namespace PersonalAlbumCollection.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260525191907_InitialSeed")]

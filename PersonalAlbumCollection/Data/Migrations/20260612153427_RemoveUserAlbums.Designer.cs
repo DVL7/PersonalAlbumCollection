@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PersonalAlbumCollection.Data;
@@ -11,9 +12,11 @@ using PersonalAlbumCollection.Data;
 namespace PersonalAlbumCollection.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260612153427_RemoveUserAlbums")]
+    partial class RemoveUserAlbums
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,16 +52,37 @@ namespace PersonalAlbumCollection.Data.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Albums", t =>
                         {
                             t.HasCheckConstraint("CK_Album_ReleaseYear_4Digits", "\"ReleaseYear\" IS NULL OR (\"ReleaseYear\" BETWEEN 1000 AND 9999)");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Ikoniczny album popowy, uznawany za jeden z najlepiej sprzedajacych sie w historii.",
+                            ReleaseYear = 1982,
+                            Title = "Thriller"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Klasyczny album The Beatles, znany m.in. z utworu \"Come Together\".",
+                            ReleaseYear = 1969,
+                            Title = "Abbey Road"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Solowy album Freddie'go Mercury'ego, prezentujacy jego indywidualny styl.",
+                            ReleaseYear = 1985,
+                            Title = "Mr. Bad Guy"
                         });
                 });
 
@@ -78,6 +102,26 @@ namespace PersonalAlbumCollection.Data.Migrations
                     b.HasIndex("ArtistId");
 
                     b.ToTable("AlbumArtists");
+
+                    b.HasData(
+                        new
+                        {
+                            AlbumId = 1,
+                            ArtistId = 1,
+                            DisplayOrder = 1
+                        },
+                        new
+                        {
+                            AlbumId = 2,
+                            ArtistId = 2,
+                            DisplayOrder = 1
+                        },
+                        new
+                        {
+                            AlbumId = 3,
+                            ArtistId = 3,
+                            DisplayOrder = 1
+                        });
                 });
 
             modelBuilder.Entity("PersonalAlbumCollection.Models.Entities.AlbumGenre", b =>
@@ -159,15 +203,38 @@ namespace PersonalAlbumCollection.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "Name")
-                        .IsUnique();
-
                     b.ToTable("Artists");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ArtistType = 1,
+                            Country = "USA",
+                            CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Krol popu, znany z albumu \"Thriller\" i widowiskowych wystepow.",
+                            Name = "Michael Jackson"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ArtistType = 2,
+                            Country = "Wielka Brytania",
+                            CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Legendarny zespol z Liverpoolu, ktory zrewolucjonizowal muzyke lat 60.",
+                            Name = "The Beatles"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ArtistType = 1,
+                            Country = "Wielka Brytania",
+                            CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Charyzmatyczny wokalista Queen i autor wielu klasycznych utworow.",
+                            Name = "Freddie Mercury"
+                        });
                 });
 
             modelBuilder.Entity("PersonalAlbumCollection.Models.Entities.Genre", b =>
@@ -183,26 +250,49 @@ namespace PersonalAlbumCollection.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "Name")
+                    b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("Genres");
-                });
 
-            modelBuilder.Entity("PersonalAlbumCollection.Models.Entities.Album", b =>
-                {
-                    b.HasOne("PersonalAlbumCollection.Models.Entities.ApplicationUser", "User")
-                        .WithMany("Albums")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Rock"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Pop"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Rap"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Hip Hop"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Jazz"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Blues"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Metal"
+                        });
                 });
 
             modelBuilder.Entity("PersonalAlbumCollection.Models.Entities.AlbumArtist", b =>
@@ -243,42 +333,11 @@ namespace PersonalAlbumCollection.Data.Migrations
                     b.Navigation("Genre");
                 });
 
-            modelBuilder.Entity("PersonalAlbumCollection.Models.Entities.Artist", b =>
-                {
-                    b.HasOne("PersonalAlbumCollection.Models.Entities.ApplicationUser", "User")
-                        .WithMany("Artists")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("PersonalAlbumCollection.Models.Entities.Genre", b =>
-                {
-                    b.HasOne("PersonalAlbumCollection.Models.Entities.ApplicationUser", "User")
-                        .WithMany("Genres")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("PersonalAlbumCollection.Models.Entities.Album", b =>
                 {
                     b.Navigation("AlbumArtists");
 
                     b.Navigation("AlbumGenres");
-                });
-
-            modelBuilder.Entity("PersonalAlbumCollection.Models.Entities.ApplicationUser", b =>
-                {
-                    b.Navigation("Albums");
-
-                    b.Navigation("Artists");
-
-                    b.Navigation("Genres");
                 });
 
             modelBuilder.Entity("PersonalAlbumCollection.Models.Entities.Artist", b =>
