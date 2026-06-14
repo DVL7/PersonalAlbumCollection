@@ -1,3 +1,5 @@
+// Album.cs
+
 namespace PersonalAlbumCollection.Models.Entities;
 
 /// <summary>
@@ -30,7 +32,19 @@ public class Album
     /// Opis lub notatka o albumie (opcjonalna).
     /// </summary>
     public string? Description { get; set; }
-
+    
+    /// <summary>
+    /// Klucz obcy do użytkownika, który jest właścicielem albumu.
+    /// </summary>
+    public int UserId { get; set; }
+    
+    /// <summary>
+    /// Podpięty użytkownik, który jest właścicielem albumu. Relacja do encji ApplicationUser.
+    /// EF-Core automatycznie wypełnia wartość, w bazie nigdy nie będzie tu wartości null.
+    /// Służy do odwołania się do danych użytkownika, np. przy wyświetlaniu albumu lub sprawdzaniu uprawnień.
+    /// </summary>
+    public ApplicationUser User { get; set; } = null!;
+    
     /// <summary>
     /// Relacje albumu z artystami (tabela laczaca AlbumArtist).
     /// </summary>
@@ -42,9 +56,8 @@ public class Album
     public ICollection<AlbumGenre> AlbumGenres { get; set; } = new List<AlbumGenre>();
 
     /// <summary>
-    /// Relacje albumu z uzytkownikami, np. ocena lub status (tabela UserAlbum).
+    /// Data utworzenia albumu.
+    /// Ustawiana automatycznie przy tworzeniu obiektu.
     /// </summary>
-    public ICollection<UserAlbum> UserAlbums { get; set; } = new List<UserAlbum>();
-    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
