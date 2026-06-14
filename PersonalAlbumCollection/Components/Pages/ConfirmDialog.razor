@@ -1,0 +1,22 @@
+@if (IsVisible)
+{
+    <div class="pac-dialog-backdrop" @onclick="OnCancel">
+        <div class="pac-dialog" @onclick:stopPropagation="true">
+            <p class="pac-dialog-title">@Title</p>
+            <p class="pac-dialog-message">@Message</p>
+            <div class="pac-dialog-actions">
+                <button class="pac-btn pac-btn-danger" @onclick="OnConfirm">@ConfirmLabel</button>
+                <button class="pac-btn pac-btn-ghost" @onclick="OnCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public string Title { get; set; } = "Are you sure?";
+    [Parameter] public string Message { get; set; } = "This action cannot be undone.";
+    [Parameter] public string ConfirmLabel { get; set; } = "Delete";
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+}

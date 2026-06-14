@@ -1,0 +1,146 @@
+@page "/albums/edit/{Id:int}"
+@rendermode InteractiveServer
+@using PersonalAlbumCollection.DTOs
+@inject PersonalAlbumCollection.Services.Interfaces.IAlbumService AlbumService
+@inject PersonalAlbumCollection.Services.Interfaces.IArtistService ArtistService
+@inject PersonalAlbumCollection.Services.Interfaces.IGenreService GenreService
+@inject NavigationManager Navigation
+@inject ICurrentUserService CurrentUser
+
+<AuthGuard>
+    <div class="pac-page-header">
+        <div>
+            <p class="pac-eyebrow">Library</p>
+            <h2>Edit album</h2>
+        </div>
+        <a class="pac-btn pac-btn-ghost" href="/albums/@Id">← Back</a>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="pac-panel">Loading album...</div>
+    }
+    else if (album is null)
+    {
+        <div class="pac-empty">Album not found.</div>
+    }
+    else
+    {
+        <div class="pac-form-card">
+            <div class="pac-form-field">
+                <label class="pac-label" for="title">Title</label>
+                <input id="title" class="pac-input" @bind="dto.Title" />
+            </div>
+
+            <div class="pac-form-row">
+                <div class="pac-form-field">
+                    <label class="pac-label" for="year">Release year</label>
+                    <input id="year" class="pac-input" type="number" @bind="dto.ReleaseYear" />
+                </div>
+                <div class="pac-form-field">
+                    <label class="pac-label" for="cover">Cover URL</label>
+                    <input id="cover" class="pac-input" @bind="dto.CoverUrl" />
+                </div>
+            </div>
+
+            <div class="pac-form-field">
+                <label class="pac-label" for="desc">Description</label>
+                <textarea id="desc" class="pac-input pac-textarea" rows="4" @bind="dto.Description"></textarea>
+            </div>
+
+            <div class="pac-form-row">
+                <div class="pac-form-field">
+                    <label class="pac-label" for="artists">Artists</label>
+                    <select id="artists" class="pac-input pac-multiselect" multiple @onchange="OnArtistsChanged">
+                        @foreach (var artist in artists)
+                        {
+                            <option value="@artist.Id" selected="@(dto.ArtistIds.Contains(artist.Id))">@artist.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="pac-form-field">
+                    <label class="pac-label" for="genres">Genres</label>
+                    <select id="genres" class="pac-input pac-multiselect" multiple @onchange="OnGenresChanged">
+                        @foreach (var genre in genres)
+                        {
+                            <option value="@genre.Id" selected="@(dto.GenreIds.Contains(genre.Id))">@genre.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="pac-alert pac-alert-danger">@errorMessage</div>
+            }
+
+            <div class="pac-form-actions">
+                <button class="pac-btn pac-btn-primary" @onclick="Save">Save changes</button>
+                <a class="pac-btn pac-btn-ghost" href="/albums/@Id">Cancel</a>
+            </div>
+        </div>
+    }
+</AuthGuard>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private AlbumDetailsDto? album;
+    private AlbumUpdateDto dto = new();
+    private List<ArtistDto> artists = new();
+    private List<GenreDto> genres = new();
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsLoggedIn) return;
+        
+        artists = await ArtistService.GetAllAsync();
+        genres = await GenreService.GetAllAsync();
+        album = await AlbumService.GetByIdAsync(Id);
+
+        if (album is not null)
+        {
+            dto.Title = album.Title;
+            dto.ReleaseYear = album.ReleaseYear;
+            dto.CoverUrl = album.CoverUrl;
+            dto.Description = album.Description;
+            dto.ArtistIds = album.ArtistIds.ToList();
+            dto.GenreIds = album.GenreIds.ToList();
+        }
+
+        isLoading = false;
+    }
+
+    private void OnArtistsChanged(ChangeEventArgs e) => dto.ArtistIds = GetSelectedIds(e);
+    private void OnGenresChanged(ChangeEventArgs e) => dto.GenreIds = GetSelectedIds(e);
+
+    private static List<int> GetSelectedIds(ChangeEventArgs e)
+    {
+        if (e.Value is string value && int.TryParse(value, out var singleId))
+            return new List<int> { singleId };
+        if (e.Value is string[] values)
+            return values.Select(int.Parse).ToList();
+        return new List<int>();
+    }
+
+    private async Task Save()
+    {
+        errorMessage = null;
+        try
+        {
+            var updated = await AlbumService.UpdateAsync(Id, dto);
+            if (!updated)
+            {
+                errorMessage = "Album was not found.";
+                return;
+            }
+            Navigation.NavigateTo($"/albums/{Id}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+}

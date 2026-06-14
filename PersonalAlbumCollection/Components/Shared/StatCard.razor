@@ -1,0 +1,12 @@
+<div class="pac-stat-card">
+    <div class="pac-stat-label">@Label</div>
+    <div class="pac-stat-value @ValueClass">@Value</div>
+    <div class="pac-stat-subtitle">@Subtitle</div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = "0";
+    [Parameter] public string Subtitle { get; set; } = string.Empty;
+    [Parameter] public string? ValueClass { get; set; }
+}

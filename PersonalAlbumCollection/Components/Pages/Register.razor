@@ -1,0 +1,58 @@
+@page "/register"
+@layout AuthLayout
+@rendermode InteractiveServer
+@inject IAuthService AuthService
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Navigation
+
+<div class="pac-auth-card">
+    <p class="pac-eyebrow">Account</p>
+    <h2>Create account</h2>
+
+    <div class="pac-form-field">
+        <label class="pac-label" for="userName">User name</label>
+        <input id="userName" class="pac-input" @bind="userName" />
+    </div>
+    <div class="pac-form-field">
+        <label class="pac-label" for="email">Email</label>
+        <input id="email" class="pac-input" type="email" @bind="email" />
+    </div>
+    <div class="pac-form-field">
+        <label class="pac-label" for="password">Password</label>
+        <input id="password" class="pac-input" type="password" @bind="password" />
+    </div>
+
+    <button class="pac-btn pac-btn-primary pac-btn-wide" @onclick="Submit">Register</button>
+
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="pac-alert pac-alert-danger">@errorMessage</div>
+    }
+
+    <p class="pac-auth-footer">Already have an account? <a href="/login" class="pac-auth-link">Log in</a>.</p>
+</div>
+
+@code {
+    private string userName = string.Empty;
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        if (CurrentUser.IsLoggedIn)
+            Navigation.NavigateTo("/albums", replace: true);
+    }
+
+    private async Task Submit()
+    {
+        errorMessage = null;
+        var result = await AuthService.RegisterAsync(userName, email, password);
+        if (!result.Success)
+        {
+            errorMessage = result.ErrorMessage ?? "Could not register.";
+            return;
+        }
+        Navigation.NavigateTo("/login?registered=1");
+    }
+}

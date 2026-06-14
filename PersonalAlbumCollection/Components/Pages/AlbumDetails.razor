@@ -1,0 +1,85 @@
+@page "/albums/{Id:int}"
+@rendermode InteractiveServer
+@using PersonalAlbumCollection.DTOs
+@inject PersonalAlbumCollection.Services.Interfaces.IAlbumService AlbumService
+@inject NavigationManager Navigation
+@inject ICurrentUserService CurrentUser
+
+<AuthGuard>
+    @if (isLoading)
+    {
+        <div class="pac-panel">Loading album...</div>
+    }
+    else if (album is null)
+    {
+        <div class="pac-empty">Album not found.</div>
+    }
+    else
+    {
+        <div class="pac-page-header">
+            <div>
+                <p class="pac-eyebrow">Library</p>
+                <h2>@album.Title</h2>
+            </div>
+            <div class="pac-page-header-actions">
+                <a class="pac-btn pac-btn-ghost" href="/albums">← Back</a>
+                <a class="pac-btn pac-btn-outline" href="/albums/edit/@album.Id">Edit</a>
+            </div>
+        </div>
+
+        <div class="pac-details-layout">
+            <div class="pac-details-cover">
+                @if (!string.IsNullOrWhiteSpace(album.CoverUrl))
+                {
+                    <img src="@album.CoverUrl" alt="@album.Title cover" />
+                }
+                else
+                {
+                    <div class="pac-cover-placeholder pac-cover-large">◎</div>
+                }
+            </div>
+
+            <div class="pac-details-content">
+                <p class="pac-muted pac-artists-line">@string.Join(", ", album.ArtistNames)</p>
+
+                <div class="pac-badges pac-badges-large">
+                    @foreach (var genre in album.GenreNames)
+                    {
+                        <span class="pac-badge">@genre</span>
+                    }
+                </div>
+
+                <dl class="pac-details-list">
+                    <div>
+                        <dt>Release year</dt>
+                        <dd>@(album.ReleaseYear?.ToString() ?? "Unknown")</dd>
+                    </div>
+                    <div>
+                        <dt>Added</dt>
+                        <dd>@album.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</dd>
+                    </div>
+                </dl>
+
+                @if (!string.IsNullOrWhiteSpace(album.Description))
+                {
+                    <p class="pac-description">@album.Description</p>
+                }
+            </div>
+        </div>
+    }
+</AuthGuard>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private AlbumDetailsDto? album;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsLoggedIn) return;
+        
+        album = await AlbumService.GetByIdAsync(Id);
+        isLoading = false;
+    }
+}

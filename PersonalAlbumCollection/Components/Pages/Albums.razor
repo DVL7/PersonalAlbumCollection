@@ -1,0 +1,153 @@
+@page "/albums"
+@rendermode InteractiveServer
+@using PersonalAlbumCollection.DTOs
+@inject PersonalAlbumCollection.Services.Interfaces.IAlbumService AlbumService
+@inject PersonalAlbumCollection.Services.Interfaces.IGenreService GenreService
+@inject ICurrentUserService CurrentUser
+
+<AuthGuard>
+    <div class="pac-page-header">
+        <div>
+            <p class="pac-eyebrow">Library</p>
+            <h2>Albums</h2>
+        </div>
+        <a class="pac-btn pac-btn-primary" href="/albums/create">+ Add album</a>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="pac-panel">Loading albums...</div>
+    }
+    else
+    {
+        <div class="pac-stats-grid">
+            <StatCard Label="Albums" Value="@filteredAlbums.Count.ToString()" Subtitle="in library" />
+            <StatCard Label="Artists" Value="@artistCount.ToString()" Subtitle="unique artists" ValueClass="pac-purple" />
+            <StatCard Label="Genres" Value="@genres.Count.ToString()" Subtitle="music genres" ValueClass="pac-yellow" />
+        </div>
+
+        <div class="pac-toolbar">
+            <input class="pac-input" placeholder="Search by album or artist" @bind="search" @oninput="OnSearchInput" />
+            <select class="pac-input pac-select" @bind="selectedGenreId" @bind:after="LoadAlbums">
+                <option value="">All genres</option>
+                @foreach (var genre in genres)
+                {
+                    <option value="@genre.Id">@genre.Name</option>
+                }
+            </select>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="pac-alert pac-alert-danger">@errorMessage</div>
+        }
+
+        @if (filteredAlbums.Count == 0)
+        {
+            <div class="pac-empty">No albums found.</div>
+        }
+        else
+        {
+            <div class="pac-album-grid">
+                @foreach (var album in filteredAlbums)
+                {
+                    <AlbumCard Album="album" OnDelete="RequestDeleteAlbum" />
+                }
+            </div>
+        }
+    }
+
+    <ConfirmDialog
+        IsVisible="confirmVisible"
+        Title="Delete album"
+        Message="@($"Are you sure you want to delete \"{confirmAlbumTitle}\"? This action cannot be undone.")"
+        ConfirmLabel="Delete"
+        OnConfirm="ConfirmDelete"
+        OnCancel="CancelDelete" />
+</AuthGuard>
+
+@code {
+    private List<AlbumListItemDto> albums = new();
+    private List<AlbumListItemDto> filteredAlbums = new();
+    private List<GenreDto> genres = new();
+    private string? search;
+    private int? selectedGenreId;
+    private int artistCount;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    private bool confirmVisible;
+    private int? pendingDeleteId;
+    private string confirmAlbumTitle = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsLoggedIn) return;
+        genres = await GenreService.GetAllAsync();
+        await LoadAlbums();
+        isLoading = false;
+    }
+
+    private async Task LoadAlbums()
+    {
+        albums = await AlbumService.GetAllAsync(search, selectedGenreId);
+        filteredAlbums = albums;
+        artistCount = albums
+            .SelectMany(a => a.Artists.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+    }
+
+    private void RequestDeleteAlbum(int id)
+    {
+        var album = albums.FirstOrDefault(a => a.Id == id);
+        confirmAlbumTitle = album?.Title ?? string.Empty;
+        pendingDeleteId = id;
+        confirmVisible = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        confirmVisible = false;
+        if (pendingDeleteId is null) return;
+
+        errorMessage = null;
+        try
+        {
+            var deleted = await AlbumService.DeleteAsync(pendingDeleteId.Value);
+            if (!deleted) errorMessage = "Album was not found.";
+            await LoadAlbums();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            pendingDeleteId = null;
+        }
+    }
+
+    private void CancelDelete()
+    {
+        confirmVisible = false;
+        pendingDeleteId = null;
+    }
+    
+    private CancellationTokenSource? _searchCts;
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        search = e.Value?.ToString();
+        _searchCts?.Cancel();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
+
+        try
+        {
+            await Task.Delay(300, token);
+            await LoadAlbums();
+        }
+        catch (TaskCanceledException) { }
+    }
+}

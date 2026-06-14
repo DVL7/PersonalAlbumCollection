@@ -1,0 +1,264 @@
+@page "/settings"
+@rendermode InteractiveServer
+@using PersonalAlbumCollection.DTOs
+@inject PersonalAlbumCollection.Services.Interfaces.IAuthService AuthService
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<AuthGuard>
+    <div class="pac-page-header">
+        <div>
+            <p class="pac-eyebrow">Account</p>
+            <h2>Settings</h2>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(globalSuccess))
+    {
+        <div class="pac-alert pac-alert-success">@globalSuccess</div>
+    }
+
+    
+    <div class="pac-settings-section">
+        <div class="pac-settings-section-header">
+            <h3>User name</h3>
+            <p class="pac-muted">Current: <strong>@CurrentUser.UserName</strong></p>
+        </div>
+        <div class="pac-form-card pac-settings-card">
+            <div class="pac-form-field">
+                <label class="pac-label" for="newUserName">New user name</label>
+                <input id="newUserName" class="pac-input" @bind="newUserName" />
+            </div>
+            @if (!string.IsNullOrWhiteSpace(userNameError))
+            {
+                <div class="pac-alert pac-alert-danger">@userNameError</div>
+            }
+            <div class="pac-form-actions">
+                <button class="pac-btn pac-btn-outline" @onclick="() => showUserNameConfirm = true">
+                    Change user name
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="pac-settings-section">
+        <div class="pac-settings-section-header">
+            <h3>Email</h3>
+        </div>
+        <div class="pac-form-card pac-settings-card">
+            <div class="pac-form-field">
+                <label class="pac-label" for="newEmail">New email</label>
+                <input id="newEmail" class="pac-input" type="email" @bind="newEmail" />
+            </div>
+            @if (!string.IsNullOrWhiteSpace(emailError))
+            {
+                <div class="pac-alert pac-alert-danger">@emailError</div>
+            }
+            <div class="pac-form-actions">
+                <button class="pac-btn pac-btn-outline" @onclick="() => showEmailConfirm = true">
+                    Change email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="pac-settings-section">
+        <div class="pac-settings-section-header">
+            <h3>Password</h3>
+        </div>
+        <div class="pac-form-card pac-settings-card">
+            <div class="pac-form-field">
+                <label class="pac-label" for="currentPassword">Current password</label>
+                <input id="currentPassword" class="pac-input" type="password" @bind="currentPassword" />
+            </div>
+            <div class="pac-form-field">
+                <label class="pac-label" for="newPassword">New password</label>
+                <input id="newPassword" class="pac-input" type="password" @bind="newPassword" />
+            </div>
+            <div class="pac-form-field">
+                <label class="pac-label" for="confirmPassword">Confirm new password</label>
+                <input id="confirmPassword" class="pac-input" type="password" @bind="confirmPassword" />
+            </div>
+            @if (!string.IsNullOrWhiteSpace(passwordError))
+            {
+                <div class="pac-alert pac-alert-danger">@passwordError</div>
+            }
+            <div class="pac-form-actions">
+                <button class="pac-btn pac-btn-outline" @onclick="() => showPasswordConfirm = true">
+                    Change password
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="pac-settings-section pac-settings-danger-zone">
+        <div class="pac-settings-section-header">
+            <h3>Danger zone</h3>
+            <p class="pac-muted">This action is permanent and cannot be undone.</p>
+        </div>
+        <div class="pac-form-card pac-settings-card">
+            <div class="pac-form-field">
+                <label class="pac-label" for="deletePassword">Confirm your password to delete account</label>
+                <input id="deletePassword" class="pac-input" type="password" @bind="deletePassword" />
+            </div>
+            @if (!string.IsNullOrWhiteSpace(deleteError))
+            {
+                <div class="pac-alert pac-alert-danger">@deleteError</div>
+            }
+            <div class="pac-form-actions">
+                <button class="pac-btn pac-btn-danger" @onclick="() => showDeleteConfirm = true">
+                    Delete account
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <ConfirmDialog
+        IsVisible="showUserNameConfirm"
+        Title="Change user name"
+        Message="@($"Are you sure you want to change your user name to \"{newUserName}\"?")"
+        ConfirmLabel="Yes, change"
+        OnConfirm="ChangeUserName"
+        OnCancel="() => showUserNameConfirm = false" />
+
+    <ConfirmDialog
+        IsVisible="showEmailConfirm"
+        Title="Change email"
+        Message="@($"Are you sure you want to change your email to \"{newEmail}\"?")"
+        ConfirmLabel="Yes, change"
+        OnConfirm="ChangeEmail"
+        OnCancel="() => showEmailConfirm = false" />
+
+    <ConfirmDialog
+        IsVisible="showPasswordConfirm"
+        Title="Change password"
+        Message="Are you sure you want to change your password?"
+        ConfirmLabel="Yes, change"
+        OnConfirm="ChangePassword"
+        OnCancel="() => showPasswordConfirm = false" />
+
+    <ConfirmDialog
+        IsVisible="showDeleteConfirm"
+        Title="Delete account"
+        Message="This will permanently delete your account and all your data — albums, artists and genres. This cannot be undone."
+        ConfirmLabel="Delete my account"
+        OnConfirm="DeleteAccount"
+        OnCancel="() => showDeleteConfirm = false" />
+</AuthGuard>
+
+@code {
+    // User name
+    private string newUserName = string.Empty;
+    private string? userNameError;
+    private bool showUserNameConfirm;
+
+    // Email
+    private string newEmail = string.Empty;
+    private string? emailError;
+    private bool showEmailConfirm;
+
+    // Password
+    private string currentPassword = string.Empty;
+    private string newPassword = string.Empty;
+    private string confirmPassword = string.Empty;
+    private string? passwordError;
+    private bool showPasswordConfirm;
+
+    // Delete
+    private string deletePassword = string.Empty;
+    private string? deleteError;
+    private bool showDeleteConfirm;
+
+    // Global
+    private string? globalSuccess;
+
+    protected override void OnInitialized()
+    {
+        if (!CurrentUser.IsLoggedIn) return;
+        CurrentUser.OnChange += StateHasChanged;
+    }
+
+    private async Task ChangeUserName()
+    {
+        showUserNameConfirm = false;
+        userNameError = null;
+        globalSuccess = null;
+
+        var result = await AuthService.ChangeUserNameAsync(CurrentUser.UserId!.Value, newUserName);
+        if (!result.Success)
+        {
+            userNameError = result.ErrorMessage;
+            return;
+        }
+
+        newUserName = string.Empty;
+        globalSuccess = "User name updated successfully.";
+    }
+
+    private async Task ChangeEmail()
+    {
+        showEmailConfirm = false;
+        emailError = null;
+        globalSuccess = null;
+
+        var result = await AuthService.ChangeEmailAsync(CurrentUser.UserId!.Value, newEmail);
+        if (!result.Success)
+        {
+            emailError = result.ErrorMessage;
+            return;
+        }
+
+        newEmail = string.Empty;
+        globalSuccess = "Email updated successfully.";
+    }
+
+    private async Task ChangePassword()
+    {
+        showPasswordConfirm = false;
+        passwordError = null;
+        globalSuccess = null;
+
+        if (newPassword != confirmPassword)
+        {
+            passwordError = "Passwords do not match.";
+            return;
+        }
+
+        var result = await AuthService.ChangePasswordAsync(CurrentUser.UserId!.Value, currentPassword, newPassword);
+        if (!result.Success)
+        {
+            passwordError = result.ErrorMessage;
+            return;
+        }
+
+        currentPassword = string.Empty;
+        newPassword = string.Empty;
+        confirmPassword = string.Empty;
+        globalSuccess = "Password changed successfully.";
+    }
+
+    private async Task DeleteAccount()
+    {
+        showDeleteConfirm = false;
+        deleteError = null;
+
+        var result = await AuthService.DeleteAccountAsync(CurrentUser.UserId!.Value, deletePassword);
+        if (!result.Success)
+        {
+            deleteError = result.ErrorMessage;
+            return;
+        }
+
+        Navigation.NavigateTo("/auth/logout", forceLoad: true);
+    }
+
+    public void Dispose()
+    {
+        CurrentUser.OnChange -= StateHasChanged;
+    }
+}

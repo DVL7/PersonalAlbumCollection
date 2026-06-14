@@ -1,0 +1,42 @@
+@page "/"
+@layout AuthLayout
+@rendermode InteractiveServer
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<div class="pac-hero">
+    <p class="pac-eyebrow">PersonalAlbumCollection</p>
+    <h2>Your private music library dashboard.</h2>
+    <p>
+        Browse albums, artists and genres. Build a simple collection and keep notes about your favourite records.
+    </p>
+    <div class="pac-hero-actions">
+        <button class="pac-btn pac-btn-primary" type="button" @onclick='() => Navigation.NavigateTo("/login")'>Log in</button>
+        <button class="pac-btn pac-btn-ghost" type="button" @onclick='() => Navigation.NavigateTo("/register")'>Register</button>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (CurrentUser.IsLoggedIn)
+        {
+            Navigation.NavigateTo("/albums", replace: true);
+            return;
+        }
+        CurrentUser.OnChange += OnUserChanged;
+    }
+
+    private void OnUserChanged()
+    {
+        if (CurrentUser.IsLoggedIn)
+            Navigation.NavigateTo("/albums", replace: true);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CurrentUser.OnChange -= OnUserChanged;
+    }
+}

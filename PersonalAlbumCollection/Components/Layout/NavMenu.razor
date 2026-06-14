@@ -1,29 +1,66 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">PersonalAlbumCollection</a>
+﻿@using PersonalAlbumCollection.Services.Interfaces
+@inject ICurrentUserService CurrentUser
+@implements IDisposable
+
+<aside class="pac-sidebar">
+    <div class="pac-brand">
+        <div class="pac-logo">◎</div>
+        <div>
+            <div class="pac-brand-main">PersonalAlbum</div>
+            <div class="pac-brand-accent">Collection</div>
+        </div>
     </div>
-</div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+    <nav class="pac-nav">
+        <div class="pac-nav-section">Library</div>
+        <NavLink class="pac-nav-link" href="/albums" Match="NavLinkMatch.Prefix">
+            <span>▦</span> Albums
+        </NavLink>
+        <NavLink class="pac-nav-link" href="/artists">
+            <span>♙</span> Artists
+        </NavLink>
+        <NavLink class="pac-nav-link" href="/genres">
+            <span>♫</span> Genres
+        </NavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+        <div class="pac-nav-divider"></div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="genres">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Genres
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+        <div class="pac-nav-section">Settings</div>
+        <NavLink class="pac-nav-link" href="/settings">
+            <span>◈</span> Account
+        </NavLink>
     </nav>
-</div>
+
+    <div class="pac-sidebar-user">
+        @if (CurrentUser.IsLoggedIn)
+        {
+            <div class="pac-avatar">@GetInitials(CurrentUser.UserName)</div>
+            <div class="pac-user-text">
+                <div>@CurrentUser.UserName</div>
+                <form class="pac-logout-form" method="post" action="/auth/logout"
+                      @formname="logout-form" data-enhance="false">
+                    <AntiforgeryToken />
+                    <button class="pac-link-button" type="submit">Log out</button>
+                </form>
+            </div>
+        }
+    </div>
+</aside>
+
+@code {
+    protected override void OnInitialized()
+    {
+        CurrentUser.OnChange += StateHasChanged;
+    }
+
+    private static string GetInitials(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "?";
+        return value.Trim()[0].ToString().ToUpperInvariant();
+    }
+
+    public void Dispose()
+    {
+        CurrentUser.OnChange -= StateHasChanged;
+    }
+}

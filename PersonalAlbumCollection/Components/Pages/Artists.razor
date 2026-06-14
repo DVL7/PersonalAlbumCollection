@@ -1,0 +1,188 @@
+@page "/artists"
+@rendermode InteractiveServer
+@using PersonalAlbumCollection.DTOs
+@using PersonalAlbumCollection.Models.Enums
+@inject PersonalAlbumCollection.Services.Interfaces.IArtistService ArtistService
+@inject ICurrentUserService CurrentUser
+
+<AuthGuard>
+    <div class="pac-page-header">
+        <div>
+            <p class="pac-eyebrow">Library</p>
+            <h2>Artists</h2>
+        </div>
+    </div>
+
+    <div class="pac-panel pac-inline-form pac-inline-form-wrap">
+        <input class="pac-input" placeholder="Artist name" @bind="newDto.Name" />
+        <select class="pac-input" style="max-width:160px" @bind="newDto.ArtistType">
+            @foreach (var type in Enum.GetValues<ArtistType>())
+            {
+                <option value="@type">@type</option>
+            }
+        </select>
+        <input class="pac-input" placeholder="Country (optional)" @bind="newDto.Country" />
+        <button class="pac-btn pac-btn-primary" @onclick="CreateArtist">+ Add artist</button>
+    </div>
+
+    <div class="pac-toolbar">
+        <input class="pac-input" placeholder="Search artist" @bind="search" @bind:event="oninput" @bind:after="LoadArtists" />
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="pac-alert @(isError ? "pac-alert-danger" : "")">@message</div>
+    }
+
+    <div class="pac-table-panel">
+        <table class="pac-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Country</th>
+                    <th>Albums</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var artist in artists)
+                {
+                    <tr>
+                        @if (editingId == artist.Id)
+                        {
+                            <td><input class="pac-input pac-input-inline" @bind="editDto.Name" /></td>
+                            <td>
+                                <select class="pac-input pac-input-inline" @bind="editDto.ArtistType">
+                                    @foreach (var type in Enum.GetValues<ArtistType>())
+                                    {
+                                        <option value="@type">@type</option>
+                                    }
+                                </select>
+                            </td>
+                            <td><input class="pac-input pac-input-inline" @bind="editDto.Country" /></td>
+                            <td>@artist.AlbumCount</td>
+                            <td class="pac-table-actions">
+                                <button class="pac-btn pac-btn-small pac-btn-outline" @onclick="() => SaveEdit(artist.Id)">Save</button>
+                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="CancelEdit">Cancel</button>
+                            </td>
+                        }
+                        else
+                        {
+                            <td>@artist.Name</td>
+                            <td>@artist.ArtistType</td>
+                            <td>@(artist.Country ?? "—")</td>
+                            <td>@artist.AlbumCount</td>
+                            <td class="pac-table-actions">
+                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="() => StartEdit(artist)">Edit</button>
+                                <button class="pac-btn pac-btn-small pac-btn-danger" @onclick="() => RequestDelete(artist.Id, artist.Name)">Delete</button>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <ConfirmDialog
+        IsVisible="confirmVisible"
+        Title="Delete artist"
+        Message="@($"Are you sure you want to delete \"{confirmArtistName}\"? This action cannot be undone.")"
+        ConfirmLabel="Delete"
+        OnConfirm="ConfirmDelete"
+        OnCancel="CancelDelete" />
+</AuthGuard>
+
+@code {
+    private List<ArtistDto> artists = new();
+    private string? search;
+    private string? message;
+    private bool isError;
+
+    // DTO dla formularza dodawania nowego artysty
+    private ArtistCreateDto newDto = new();
+
+    // DTO dla formularza edycji artysty
+    private int? editingId;
+    private ArtistUpdateDto editDto = new();
+
+    private bool confirmVisible;
+    private int? pendingDeleteId;
+    private string confirmArtistName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsLoggedIn) return;
+        await LoadArtists();
+    }
+
+    private async Task LoadArtists() =>
+        artists = await ArtistService.GetAllAsync(search);
+
+    private async Task CreateArtist()
+    {
+        await RunAsync(async () =>
+        {
+            await ArtistService.CreateAsync(newDto);
+            newDto = new ArtistCreateDto();
+            await LoadArtists();
+        });
+    }
+
+    private void StartEdit(ArtistDto artist)
+    {
+        editingId = artist.Id;
+        editDto = new ArtistUpdateDto
+        {
+            Name = artist.Name,
+            ArtistType = artist.ArtistType,
+            Country = artist.Country
+        };
+        message = null;
+    }
+
+    private void CancelEdit() => editingId = null;
+
+    private async Task SaveEdit(int id)
+    {
+        await RunAsync(async () =>
+        {
+            await ArtistService.UpdateAsync(id, editDto);
+            editingId = null;
+            await LoadArtists();
+        });
+    }
+
+    private void RequestDelete(int id, string name)
+    {
+        pendingDeleteId = id;
+        confirmArtistName = name;
+        confirmVisible = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        confirmVisible = false;
+        if (pendingDeleteId is null) return;
+        await RunAsync(async () =>
+        {
+            await ArtistService.DeleteAsync(pendingDeleteId.Value);
+            pendingDeleteId = null;
+            await LoadArtists();
+        });
+    }
+
+    private void CancelDelete()
+    {
+        confirmVisible = false;
+        pendingDeleteId = null;
+    }
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        message = null;
+        isError = false;
+        try { await action(); }
+        catch (Exception ex) { message = ex.Message; isError = true; }
+    }
+}

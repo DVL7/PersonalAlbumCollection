@@ -1,0 +1,13 @@
+@if (!string.IsNullOrWhiteSpace(Genres))
+{
+    <div class="pac-badges">
+        @foreach (var genre in Genres.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            <span class="pac-badge">@genre</span>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string? Genres { get; set; }
+}

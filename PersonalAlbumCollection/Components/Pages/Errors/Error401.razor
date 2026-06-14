@@ -1,0 +1,10 @@
+@page "/unauthorized"
+@layout AuthLayout
+@rendermode InteractiveServer
+
+<div class="pac-error-card">
+    <div class="pac-error-code">401</div>
+    <h2>Not logged in</h2>
+    <p class="pac-muted">You need to be logged in to access this page.</p>
+    <a class="pac-btn pac-btn-primary" href="/login">Log in</a>
+</div>

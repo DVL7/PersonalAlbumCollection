@@ -1,0 +1,35 @@
+@using PersonalAlbumCollection.DTOs
+
+<article class="pac-album-card">
+    <a href="/albums/@Album.Id" class="pac-cover-link">
+        @if (!string.IsNullOrWhiteSpace(Album.CoverUrl))
+        {
+            <img src="@Album.CoverUrl" alt="@Album.Title cover" class="pac-album-cover" />
+        }
+        else
+        {
+            <div class="pac-cover-placeholder">◎</div>
+        }
+    </a>
+
+    <div class="pac-album-body">
+        <h3>@Album.Title</h3>
+        <p>@Album.Artists</p>
+        <GenresBadges Genres="@Album.Genres" />
+
+        <div class="pac-album-meta">
+            <span>@(Album.ReleaseYear?.ToString() ?? "Unknown year")</span>
+        </div>
+    </div>
+
+    <div class="pac-card-actions">
+        <a class="pac-btn pac-btn-small pac-btn-outline" href="/albums/@Album.Id">Details</a>
+        <a class="pac-btn pac-btn-small pac-btn-ghost" href="/albums/edit/@Album.Id">Edit</a>
+        <button class="pac-btn pac-btn-small pac-btn-danger" @onclick="() => OnDelete.InvokeAsync(Album.Id)">Del</button>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public AlbumListItemDto Album { get; set; } = default!;
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
+}

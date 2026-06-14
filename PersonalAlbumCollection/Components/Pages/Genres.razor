@@ -1,0 +1,170 @@
+@page "/genres"
+@rendermode InteractiveServer
+@using PersonalAlbumCollection.DTOs
+@inject PersonalAlbumCollection.Services.Interfaces.IGenreService GenreService
+@inject ICurrentUserService CurrentUser
+
+<AuthGuard>
+    <div class="pac-page-header">
+        <div>
+            <p class="pac-eyebrow">Library</p>
+            <h2>Genres</h2>
+        </div>
+    </div>
+
+    <div class="pac-panel pac-inline-form">
+        <input class="pac-input" placeholder="New genre name" @bind="newGenreName" @onkeydown="OnNewGenreKeyDown" />
+        <button class="pac-btn pac-btn-primary" @onclick="CreateGenre">+ Add genre</button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="pac-alert @(isError ? "pac-alert-danger" : "")">@message</div>
+    }
+
+    <div class="pac-table-panel">
+        <table class="pac-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Albums</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var genre in genres)
+                {
+                    <tr>
+                        <td>
+                            @if (editingId == genre.Id)
+                            {
+                                <input class="pac-input pac-input-inline" @bind="editingName" @onkeydown="e => OnEditKeyDown(e, genre.Id)" />
+                            }
+                            else
+                            {
+                                @genre.Name
+                            }
+                        </td>
+                        <td>@genre.AlbumCount</td>
+                        <td class="pac-table-actions">
+                            @if (editingId == genre.Id)
+                            {
+                                <button class="pac-btn pac-btn-small pac-btn-outline" @onclick="() => SaveEdit(genre.Id)">Save</button>
+                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="CancelEdit">Cancel</button>
+                            }
+                            else
+                            {
+                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="() => StartEdit(genre.Id, genre.Name)">Edit</button>
+                                <button class="pac-btn pac-btn-small pac-btn-danger" @onclick="() => RequestDelete(genre.Id, genre.Name)">Delete</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <ConfirmDialog
+        IsVisible="confirmVisible"
+        Title="Delete genre"
+        Message="@($"Are you sure you want to delete \"{confirmGenreName}\"? This action cannot be undone.")"
+        ConfirmLabel="Delete"
+        OnConfirm="ConfirmDelete"
+        OnCancel="CancelDelete" />
+</AuthGuard>
+
+@code {
+    private List<GenreDto> genres = new();
+    private string? newGenreName;
+    private string? message;
+    private bool isError;
+
+    private int? editingId;
+    private string editingName = string.Empty;
+
+    private bool confirmVisible;
+    private int? pendingDeleteId;
+    private string confirmGenreName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsLoggedIn) return;
+        await LoadGenres();
+    }
+
+    private async Task LoadGenres() =>
+        genres = await GenreService.GetAllAsync();
+
+    private async Task CreateGenre()
+    {
+        await RunAsync(async () =>
+        {
+            await GenreService.CreateAsync(newGenreName ?? string.Empty);
+            newGenreName = string.Empty;
+            await LoadGenres();
+        });
+    }
+
+    private async Task OnNewGenreKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await CreateGenre();
+    }
+
+    private void StartEdit(int id, string name)
+    {
+        editingId = id;
+        editingName = name;
+        message = null;
+    }
+
+    private void CancelEdit() => editingId = null;
+
+    private async Task SaveEdit(int id)
+    {
+        await RunAsync(async () =>
+        {
+            await GenreService.UpdateAsync(id, editingName);
+            editingId = null;
+            await LoadGenres();
+        });
+    }
+
+    private async Task OnEditKeyDown(KeyboardEventArgs e, int id)
+    {
+        if (e.Key == "Enter") await SaveEdit(id);
+        if (e.Key == "Escape") CancelEdit();
+    }
+
+    private void RequestDelete(int id, string name)
+    {
+        pendingDeleteId = id;
+        confirmGenreName = name;
+        confirmVisible = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        confirmVisible = false;
+        if (pendingDeleteId is null) return;
+        await RunAsync(async () =>
+        {
+            await GenreService.DeleteAsync(pendingDeleteId.Value);
+            pendingDeleteId = null;
+            await LoadGenres();
+        });
+    }
+
+    private void CancelDelete()
+    {
+        confirmVisible = false;
+        pendingDeleteId = null;
+    }
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        message = null;
+        isError = false;
+        try { await action(); }
+        catch (Exception ex) { message = ex.Message; isError = true; }
+    }
+}

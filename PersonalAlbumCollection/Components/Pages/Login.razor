@@ -1,0 +1,52 @@
+@page "/login"
+@layout AuthLayout
+@rendermode InteractiveServer
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Navigation
+
+<div class="pac-auth-card">
+    <p class="pac-eyebrow">Account</p>
+    <h2>Log in</h2>
+
+    @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+    {
+        <div class="pac-alert pac-alert-success">@SuccessMessage</div>
+    }
+
+    <form method="post" action="/auth/login" @formname="login-form" data-enhance="false">
+        <AntiforgeryToken />
+        <div class="pac-form-field">
+            <label class="pac-label" for="login">Login or email</label>
+            <input id="login" class="pac-input" name="login" autocomplete="username" />
+        </div>
+        <div class="pac-form-field">
+            <label class="pac-label" for="password">Password</label>
+            <input id="password" class="pac-input" type="password" name="password" autocomplete="current-password" />
+        </div>
+        <button class="pac-btn pac-btn-primary pac-btn-wide" type="submit">Log in</button>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="pac-alert pac-alert-danger">@ErrorMessage</div>
+    }
+
+    <p class="pac-auth-footer">No account yet? <a href="/register" class="pac-auth-link">Create one</a>.</p>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    [SupplyParameterFromQuery(Name = "registered")]
+    public string? Registered { get; set; }
+
+    private string? ErrorMessage => Error is null ? null : "Invalid login or password.";
+    private string? SuccessMessage => Registered is null ? null : "Account created! You can now log in.";
+
+    protected override void OnInitialized()
+    {
+        if (CurrentUser.IsLoggedIn)
+            Navigation.NavigateTo("/albums", replace: true);
+    }
+}
