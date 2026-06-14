@@ -1,3 +1,5 @@
+@* Artists.razor *@
+
 @page "/artists"
 @rendermode InteractiveServer
 @using PersonalAlbumCollection.DTOs
@@ -5,43 +7,49 @@
 @inject PersonalAlbumCollection.Services.Interfaces.IArtistService ArtistService
 @inject ICurrentUserService CurrentUser
 
+@* AuthGuard przekierowuje niezalogowanych użytkowników na stronę logowania *@
 <AuthGuard>
+    @* Nagłówek strony *@
     <div class="pac-page-header">
         <div>
-            <p class="pac-eyebrow">Library</p>
-            <h2>Artists</h2>
+            <p class="pac-eyebrow">Biblioteka</p>
+            <h2>Artyści</h2>
         </div>
     </div>
 
+    @* Formularz dodawania nowego artysty — panel inline z polem nazwy, typem i krajem *@
     <div class="pac-panel pac-inline-form pac-inline-form-wrap">
-        <input class="pac-input" placeholder="Artist name" @bind="newDto.Name" />
+        <input class="pac-input" placeholder="Nazwa artysty" @bind="newDto.Name" />
         <select class="pac-input" style="max-width:160px" @bind="newDto.ArtistType">
             @foreach (var type in Enum.GetValues<ArtistType>())
             {
                 <option value="@type">@type</option>
             }
         </select>
-        <input class="pac-input" placeholder="Country (optional)" @bind="newDto.Country" />
-        <button class="pac-btn pac-btn-primary" @onclick="CreateArtist">+ Add artist</button>
+        <input class="pac-input" placeholder="Kraj (opcjonalnie)" @bind="newDto.Country" />
+        <button class="pac-btn pac-btn-primary" @onclick="CreateArtist">+ Dodaj artystę</button>
     </div>
 
+    @* Pasek wyszukiwania — filtruje listę artystów po nazwie w czasie rzeczywistym *@
     <div class="pac-toolbar">
-        <input class="pac-input" placeholder="Search artist" @bind="search" @bind:event="oninput" @bind:after="LoadArtists" />
+        <input class="pac-input" placeholder="Szukaj artysty" @bind="search" @bind:event="oninput" @bind:after="LoadArtists" />
     </div>
 
+    @* Komunikat błędu lub sukcesu operacji *@
     @if (!string.IsNullOrWhiteSpace(message))
     {
         <div class="pac-alert @(isError ? "pac-alert-danger" : "")">@message</div>
     }
 
+    @* Tabela artystów z edycją inline *@
     <div class="pac-table-panel">
         <table class="pac-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Country</th>
-                    <th>Albums</th>
+                    <th>Nazwa</th>
+                    <th>Typ</th>
+                    <th>Kraj</th>
+                    <th>Albumy</th>
                     <th></th>
                 </tr>
             </thead>
@@ -49,6 +57,7 @@
                 @foreach (var artist in artists)
                 {
                     <tr>
+                        @* Wiersz w trybie edycji — pola zastępują komórki z danymi *@
                         @if (editingId == artist.Id)
                         {
                             <td><input class="pac-input pac-input-inline" @bind="editDto.Name" /></td>
@@ -63,10 +72,11 @@
                             <td><input class="pac-input pac-input-inline" @bind="editDto.Country" /></td>
                             <td>@artist.AlbumCount</td>
                             <td class="pac-table-actions">
-                                <button class="pac-btn pac-btn-small pac-btn-outline" @onclick="() => SaveEdit(artist.Id)">Save</button>
-                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="CancelEdit">Cancel</button>
+                                <button class="pac-btn pac-btn-small pac-btn-outline" @onclick="() => SaveEdit(artist.Id)">Zapisz</button>
+                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="CancelEdit">Anuluj</button>
                             </td>
                         }
+                        @* Wiersz w trybie podglądu — dane z przyciskami edycji i usunięcia *@
                         else
                         {
                             <td>@artist.Name</td>
@@ -74,8 +84,8 @@
                             <td>@(artist.Country ?? "—")</td>
                             <td>@artist.AlbumCount</td>
                             <td class="pac-table-actions">
-                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="() => StartEdit(artist)">Edit</button>
-                                <button class="pac-btn pac-btn-small pac-btn-danger" @onclick="() => RequestDelete(artist.Id, artist.Name)">Delete</button>
+                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="() => StartEdit(artist)">Edytuj</button>
+                                <button class="pac-btn pac-btn-small pac-btn-danger" @onclick="() => RequestDelete(artist.Id, artist.Name)">Usuń</button>
                             </td>
                         }
                     </tr>
@@ -84,41 +94,58 @@
         </table>
     </div>
 
+    @* Dialog potwierdzenia usunięcia artysty *@
     <ConfirmDialog
         IsVisible="confirmVisible"
-        Title="Delete artist"
-        Message="@($"Are you sure you want to delete \"{confirmArtistName}\"? This action cannot be undone.")"
-        ConfirmLabel="Delete"
+        Title="Usuń artystę"
+        Message="@($"Czy na pewno chcesz usunąć \"{confirmArtistName}\"? Tej operacji nie można cofnąć.")"
+        ConfirmLabel="Usuń"
         OnConfirm="ConfirmDelete"
         OnCancel="CancelDelete" />
 </AuthGuard>
 
 @code {
+    // Lista artystów pobrana z serwisu
     private List<ArtistDto> artists = new();
+
+    // Fraza wyszukiwania do filtrowania listy
     private string? search;
+
+    // Komunikat wyniku operacji i flaga błędu
     private string? message;
     private bool isError;
 
     // DTO dla formularza dodawania nowego artysty
     private ArtistCreateDto newDto = new();
 
-    // DTO dla formularza edycji artysty
+    // Id artysty aktualnie edytowanego inline oraz jego DTO edycji
     private int? editingId;
     private ArtistUpdateDto editDto = new();
 
+    // Stan dialogu potwierdzenia usunięcia
     private bool confirmVisible;
     private int? pendingDeleteId;
     private string confirmArtistName = string.Empty;
 
+    /// <summary>
+    /// Ładuje listę artystów przy inicjalizacji komponentu.
+    /// Pomija ładowanie gdy użytkownik nie jest zalogowany (obsługiwane przez AuthGuard).
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         if (!CurrentUser.IsLoggedIn) return;
         await LoadArtists();
     }
 
+    /// <summary>
+    /// Pobiera listę artystów z uwzględnieniem aktualnej frazy wyszukiwania.
+    /// </summary>
     private async Task LoadArtists() =>
         artists = await ArtistService.GetAllAsync(search);
 
+    /// <summary>
+    /// Tworzy nowego artystę przez serwis, czyści formularz i odświeża listę.
+    /// </summary>
     private async Task CreateArtist()
     {
         await RunAsync(async () =>
@@ -129,6 +156,11 @@
         });
     }
 
+    /// <summary>
+    /// Włącza tryb edycji inline dla wybranego artysty.
+    /// Wypełnia editDto aktualnymi danymi artysty i czyści poprzedni komunikat.
+    /// </summary>
+    /// <param name="artist">Artysta do edycji.</param>
     private void StartEdit(ArtistDto artist)
     {
         editingId = artist.Id;
@@ -141,8 +173,15 @@
         message = null;
     }
 
+    /// <summary>
+    /// Anuluje tryb edycji inline bez zapisywania zmian.
+    /// </summary>
     private void CancelEdit() => editingId = null;
 
+    /// <summary>
+    /// Zapisuje zmiany edytowanego artysty przez serwis i odświeża listę.
+    /// </summary>
+    /// <param name="id">Id artysty do zaktualizowania.</param>
     private async Task SaveEdit(int id)
     {
         await RunAsync(async () =>
@@ -153,6 +192,11 @@
         });
     }
 
+    /// <summary>
+    /// Inicjuje proces usuwania — ustawia nazwę artysty i otwiera dialog potwierdzenia.
+    /// </summary>
+    /// <param name="id">Id artysty do usunięcia.</param>
+    /// <param name="name">Nazwa artysty wyświetlana w dialogu potwierdzenia.</param>
     private void RequestDelete(int id, string name)
     {
         pendingDeleteId = id;
@@ -160,6 +204,10 @@
         confirmVisible = true;
     }
 
+    /// <summary>
+    /// Wykonuje usunięcie artysty po potwierdzeniu przez użytkownika.
+    /// Odświeża listę artystów po operacji.
+    /// </summary>
     private async Task ConfirmDelete()
     {
         confirmVisible = false;
@@ -172,12 +220,20 @@
         });
     }
 
+    /// <summary>
+    /// Anuluje operację usuwania i zamyka dialog potwierdzenia.
+    /// </summary>
     private void CancelDelete()
     {
         confirmVisible = false;
         pendingDeleteId = null;
     }
 
+    /// <summary>
+    /// Pomocnicza metoda opakowująca wywołania serwisu w obsługę błędów.
+    /// Czyści komunikat przed wykonaniem akcji i wyświetla wyjątek gdy wystąpi błąd.
+    /// </summary>
+    /// <param name="action">Akcja asynchroniczna do wykonania.</param>
     private async Task RunAsync(Func<Task> action)
     {
         message = null;

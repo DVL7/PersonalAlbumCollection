@@ -1,3 +1,5 @@
+@* Home.razor *@
+
 @page "/"
 @layout AuthLayout
 @rendermode InteractiveServer
@@ -5,19 +7,26 @@
 @inject NavigationManager Navigation
 @implements IDisposable
 
+@* Sekcja hero — widoczna tylko dla niezalogowanych użytkowników *@
 <div class="pac-hero">
     <p class="pac-eyebrow">PersonalAlbumCollection</p>
-    <h2>Your private music library dashboard.</h2>
+    <h2>Twoja prywatna biblioteka muzyczna.</h2>
     <p>
-        Browse albums, artists and genres. Build a simple collection and keep notes about your favourite records.
+        Przeglądaj albumy, artystów i gatunki. Buduj kolekcję i prowadź notatki o ulubionych płytach.
     </p>
+    @* Przyciski CTA — prowadzą do logowania i rejestracji *@
     <div class="pac-hero-actions">
-        <button class="pac-btn pac-btn-primary" type="button" @onclick='() => Navigation.NavigateTo("/login")'>Log in</button>
-        <button class="pac-btn pac-btn-ghost" type="button" @onclick='() => Navigation.NavigateTo("/register")'>Register</button>
+        <button class="pac-btn pac-btn-primary" type="button" @onclick='() => Navigation.NavigateTo("/login")'>Zaloguj się</button>
+        <button class="pac-btn pac-btn-ghost" type="button" @onclick='() => Navigation.NavigateTo("/register")'>Zarejestruj się</button>
     </div>
 </div>
 
 @code {
+    /// <summary>
+    /// Przy inicjalizacji sprawdza, czy użytkownik jest już zalogowany —
+    /// jeśli tak, natychmiast przekierowuje na /albums.
+    /// W przeciwnym razie subskrybuje OnChange, aby wykryć logowanie w czasie rzeczywistym.
+    /// </summary>
     protected override void OnInitialized()
     {
         if (CurrentUser.IsLoggedIn)
@@ -28,6 +37,11 @@
         CurrentUser.OnChange += OnUserChanged;
     }
 
+    /// <summary>
+    /// Obsługuje zdarzenie zmiany stanu użytkownika.
+    /// Przekierowuje na /albums gdy użytkownik się zaloguje,
+    /// oraz wymusza odświeżenie komponentu.
+    /// </summary>
     private void OnUserChanged()
     {
         if (CurrentUser.IsLoggedIn)
@@ -35,6 +49,10 @@
         InvokeAsync(StateHasChanged);
     }
 
+    /// <summary>
+    /// Usuwa subskrypcję zdarzenia OnChange przy niszczeniu komponentu,
+    /// aby uniknąć wycieków pamięci.
+    /// </summary>
     public void Dispose()
     {
         CurrentUser.OnChange -= OnUserChanged;

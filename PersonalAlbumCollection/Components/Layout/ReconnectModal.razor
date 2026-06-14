@@ -1,31 +1,48 @@
-﻿<script type="module" src="@Assets["Components/Layout/ReconnectModal.razor.js"]"></script>
+﻿@* ReconnectModal.razor *@
 
+@* Skrypt obsługujący logikę modala — zarządza stanem widoczności i licznikiem sekund *@
+<script type="module" src="@Assets["Components/Layout/ReconnectModal.razor.js"]"></script>
+
+@* Dialog modala — id i klasy rozpoznawane przez Blazora i plik JS *@
 <dialog id="components-reconnect-modal" data-nosnippet>
     <div class="components-reconnect-container">
+
+        @* Animacja ładowania widoczna podczas próby reconnectu *@
         <div class="components-rejoining-animation" aria-hidden="true">
             <div></div>
             <div></div>
         </div>
+
+        @* Komunikat przy pierwszej próbie ponownego połączenia *@
         <p class="components-reconnect-first-attempt-visible">
-            Rejoining the server...
+            Łączenie z serwerem...
         </p>
+
+        @* Komunikat przy kolejnych nieudanych próbach — pokazuje odliczanie do następnej próby *@
         <p class="components-reconnect-repeated-attempt-visible">
-            Rejoin failed... trying again in <span id="components-seconds-to-next-attempt"></span> seconds.
+            Ponowne połączenie nie powiodło się... kolejna próba za <span id="components-seconds-to-next-attempt"></span> s.
         </p>
+
+        @* Komunikat i przycisk widoczne gdy wszystkie próby reconnectu zawiodły *@
         <p class="components-reconnect-failed-visible">
-            Failed to rejoin.<br/>Please retry or reload the page.
+            Nie udało się połączyć z serwerem.<br/>Spróbuj ponownie lub odśwież stronę.
         </p>
         <button id="components-reconnect-button" class="components-reconnect-failed-visible">
-            Retry
+            Spróbuj ponownie
         </button>
+
+        @* Komunikat widoczny gdy sesja została wstrzymana przez serwer *@
         <p class="components-pause-visible">
-            The session has been paused by the server.
+            Sesja została wstrzymana przez serwer.
         </p>
+
+        @* Komunikat i przycisk widoczne gdy wznowienie sesji nie powiodło się *@
         <p class="components-resume-failed-visible">
-            Failed to resume the session.<br/>Please retry or reload the page.
+            Nie udało się wznowić sesji.<br/>Spróbuj ponownie lub odśwież stronę.
         </p>
         <button id="components-resume-button" class="components-pause-visible components-resume-failed-visible">
-            Resume
+            Wznów
         </button>
+
     </div>
 </dialog>

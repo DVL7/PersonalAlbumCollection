@@ -1,33 +1,40 @@
+@* Genres.razor *@
+
 @page "/genres"
 @rendermode InteractiveServer
 @using PersonalAlbumCollection.DTOs
 @inject PersonalAlbumCollection.Services.Interfaces.IGenreService GenreService
 @inject ICurrentUserService CurrentUser
 
+@* AuthGuard przekierowuje niezalogowanych użytkowników na stronę logowania *@
 <AuthGuard>
+    @* Nagłówek strony *@
     <div class="pac-page-header">
         <div>
-            <p class="pac-eyebrow">Library</p>
-            <h2>Genres</h2>
+            <p class="pac-eyebrow">Biblioteka</p>
+            <h2>Gatunki</h2>
         </div>
     </div>
 
+    @* Formularz dodawania nowego gatunku — obsługuje również klawisz Enter *@
     <div class="pac-panel pac-inline-form">
-        <input class="pac-input" placeholder="New genre name" @bind="newGenreName" @onkeydown="OnNewGenreKeyDown" />
-        <button class="pac-btn pac-btn-primary" @onclick="CreateGenre">+ Add genre</button>
+        <input class="pac-input" placeholder="Nazwa nowego gatunku" @bind="newGenreName" @onkeydown="OnNewGenreKeyDown" />
+        <button class="pac-btn pac-btn-primary" @onclick="CreateGenre">+ Dodaj gatunek</button>
     </div>
 
+    @* Komunikat błędu lub sukcesu operacji *@
     @if (!string.IsNullOrWhiteSpace(message))
     {
         <div class="pac-alert @(isError ? "pac-alert-danger" : "")">@message</div>
     }
 
+    @* Tabela gatunków z edycją inline *@
     <div class="pac-table-panel">
         <table class="pac-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Albums</th>
+                    <th>Nazwa</th>
+                    <th>Albumy</th>
                     <th></th>
                 </tr>
             </thead>
@@ -36,6 +43,8 @@
                 {
                     <tr>
                         <td>
+                            @* Komórka nazwy — w trybie edycji zamieniana na pole tekstowe.
+                               Enter zatwierdza zapis, Escape anuluje edycję. *@
                             @if (editingId == genre.Id)
                             {
                                 <input class="pac-input pac-input-inline" @bind="editingName" @onkeydown="e => OnEditKeyDown(e, genre.Id)" />
@@ -47,15 +56,16 @@
                         </td>
                         <td>@genre.AlbumCount</td>
                         <td class="pac-table-actions">
+                            @* Przyciski zależne od trybu — zapis/anuluj lub edytuj/usuń *@
                             @if (editingId == genre.Id)
                             {
-                                <button class="pac-btn pac-btn-small pac-btn-outline" @onclick="() => SaveEdit(genre.Id)">Save</button>
-                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="CancelEdit">Cancel</button>
+                                <button class="pac-btn pac-btn-small pac-btn-outline" @onclick="() => SaveEdit(genre.Id)">Zapisz</button>
+                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="CancelEdit">Anuluj</button>
                             }
                             else
                             {
-                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="() => StartEdit(genre.Id, genre.Name)">Edit</button>
-                                <button class="pac-btn pac-btn-small pac-btn-danger" @onclick="() => RequestDelete(genre.Id, genre.Name)">Delete</button>
+                                <button class="pac-btn pac-btn-small pac-btn-ghost" @onclick="() => StartEdit(genre.Id, genre.Name)">Edytuj</button>
+                                <button class="pac-btn pac-btn-small pac-btn-danger" @onclick="() => RequestDelete(genre.Id, genre.Name)">Usuń</button>
                             }
                         </td>
                     </tr>
@@ -64,37 +74,55 @@
         </table>
     </div>
 
+    @* Dialog potwierdzenia usunięcia gatunku *@
     <ConfirmDialog
         IsVisible="confirmVisible"
-        Title="Delete genre"
-        Message="@($"Are you sure you want to delete \"{confirmGenreName}\"? This action cannot be undone.")"
-        ConfirmLabel="Delete"
+        Title="Usuń gatunek"
+        Message="@($"Czy na pewno chcesz usunąć \"{confirmGenreName}\"? Tej operacji nie można cofnąć.")"
+        ConfirmLabel="Usuń"
         OnConfirm="ConfirmDelete"
         OnCancel="CancelDelete" />
 </AuthGuard>
 
 @code {
+    // Lista gatunków pobrana z serwisu
     private List<GenreDto> genres = new();
+
+    // Nazwa wpisana w formularzu dodawania nowego gatunku
     private string? newGenreName;
+
+    // Komunikat wyniku operacji i flaga błędu
     private string? message;
     private bool isError;
 
+    // Id gatunku aktualnie edytowanego inline oraz jego tymczasowa nazwa
     private int? editingId;
     private string editingName = string.Empty;
 
+    // Stan dialogu potwierdzenia usunięcia
     private bool confirmVisible;
     private int? pendingDeleteId;
     private string confirmGenreName = string.Empty;
 
+    /// <summary>
+    /// Ładuje listę gatunków przy inicjalizacji komponentu.
+    /// Pomija ładowanie gdy użytkownik nie jest zalogowany (obsługiwane przez AuthGuard).
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         if (!CurrentUser.IsLoggedIn) return;
         await LoadGenres();
     }
 
+    /// <summary>
+    /// Pobiera aktualną listę gatunków z serwisu.
+    /// </summary>
     private async Task LoadGenres() =>
         genres = await GenreService.GetAllAsync();
 
+    /// <summary>
+    /// Tworzy nowy gatunek przez serwis, czyści pole tekstowe i odświeża listę.
+    /// </summary>
     private async Task CreateGenre()
     {
         await RunAsync(async () =>
@@ -105,11 +133,21 @@
         });
     }
 
+    /// <summary>
+    /// Obsługuje naciśnięcie klawisza w polu dodawania nowego gatunku.
+    /// Enter wywołuje CreateGenre.
+    /// </summary>
     private async Task OnNewGenreKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await CreateGenre();
     }
 
+    /// <summary>
+    /// Włącza tryb edycji inline dla wybranego gatunku.
+    /// Ustawia editingId i wypełnia editingName aktualną nazwą gatunku.
+    /// </summary>
+    /// <param name="id">Id gatunku do edycji.</param>
+    /// <param name="name">Aktualna nazwa gatunku.</param>
     private void StartEdit(int id, string name)
     {
         editingId = id;
@@ -117,8 +155,15 @@
         message = null;
     }
 
+    /// <summary>
+    /// Anuluje tryb edycji inline bez zapisywania zmian.
+    /// </summary>
     private void CancelEdit() => editingId = null;
 
+    /// <summary>
+    /// Zapisuje zmienioną nazwę gatunku przez serwis i odświeża listę.
+    /// </summary>
+    /// <param name="id">Id gatunku do zaktualizowania.</param>
     private async Task SaveEdit(int id)
     {
         await RunAsync(async () =>
@@ -129,12 +174,23 @@
         });
     }
 
+    /// <summary>
+    /// Obsługuje naciśnięcie klawisza w polu edycji inline.
+    /// Enter zapisuje zmiany, Escape anuluje edycję.
+    /// </summary>
+    /// <param name="e">Argumenty zdarzenia klawiatury.</param>
+    /// <param name="id">Id gatunku edytowanego w danym wierszu.</param>
     private async Task OnEditKeyDown(KeyboardEventArgs e, int id)
     {
         if (e.Key == "Enter") await SaveEdit(id);
         if (e.Key == "Escape") CancelEdit();
     }
 
+    /// <summary>
+    /// Inicjuje proces usuwania — ustawia nazwę gatunku i otwiera dialog potwierdzenia.
+    /// </summary>
+    /// <param name="id">Id gatunku do usunięcia.</param>
+    /// <param name="name">Nazwa gatunku wyświetlana w dialogu potwierdzenia.</param>
     private void RequestDelete(int id, string name)
     {
         pendingDeleteId = id;
@@ -142,6 +198,10 @@
         confirmVisible = true;
     }
 
+    /// <summary>
+    /// Wykonuje usunięcie gatunku po potwierdzeniu przez użytkownika.
+    /// Odświeża listę gatunków po operacji.
+    /// </summary>
     private async Task ConfirmDelete()
     {
         confirmVisible = false;
@@ -154,12 +214,20 @@
         });
     }
 
+    /// <summary>
+    /// Anuluje operację usuwania i zamyka dialog potwierdzenia.
+    /// </summary>
     private void CancelDelete()
     {
         confirmVisible = false;
         pendingDeleteId = null;
     }
 
+    /// <summary>
+    /// Pomocnicza metoda opakowująca wywołania serwisu w obsługę błędów.
+    /// Czyści komunikat przed wykonaniem akcji i wyświetla wyjątek gdy wystąpi błąd.
+    /// </summary>
+    /// <param name="action">Akcja asynchroniczna do wykonania.</param>
     private async Task RunAsync(Func<Task> action)
     {
         message = null;

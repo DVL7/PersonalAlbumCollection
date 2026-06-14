@@ -1,3 +1,5 @@
+@* AlbumEdit.razor *@
+
 @page "/albums/edit/{Id:int}"
 @rendermode InteractiveServer
 @using PersonalAlbumCollection.DTOs
@@ -7,50 +9,60 @@
 @inject NavigationManager Navigation
 @inject ICurrentUserService CurrentUser
 
+@* AuthGuard przekierowuje niezalogowanych użytkowników na stronę logowania *@
 <AuthGuard>
+    @* Nagłówek strony z przyciskiem powrotu do szczegółów albumy *@
     <div class="pac-page-header">
         <div>
-            <p class="pac-eyebrow">Library</p>
-            <h2>Edit album</h2>
+            <p class="pac-eyebrow">Biblioteka</p>
+            <h2>Edytuj album</h2>
         </div>
-        <a class="pac-btn pac-btn-ghost" href="/albums/@Id">← Back</a>
+        <a class="pac-btn pac-btn-ghost" href="/albums/@Id">← Wróć</a>
     </div>
 
+    @* Stany: ładowanie, brak albumu lub właściwa zawartość formularza *@
     @if (isLoading)
     {
-        <div class="pac-panel">Loading album...</div>
+        <div class="pac-panel">Ładowanie albumu...</div>
     }
     else if (album is null)
     {
-        <div class="pac-empty">Album not found.</div>
+        <div class="pac-empty">Nie znaleziono albumu.</div>
     }
     else
     {
+        @* Karta formularza edycji *@
         <div class="pac-form-card">
+            @* Pole: tytuł albumu *@
             <div class="pac-form-field">
-                <label class="pac-label" for="title">Title</label>
+                <label class="pac-label" for="title">Tytuł</label>
                 <input id="title" class="pac-input" @bind="dto.Title" />
             </div>
 
+            @* Wiersz z dwoma polami: rok wydania i URL okładki *@
             <div class="pac-form-row">
                 <div class="pac-form-field">
-                    <label class="pac-label" for="year">Release year</label>
+                    <label class="pac-label" for="year">Rok wydania</label>
                     <input id="year" class="pac-input" type="number" @bind="dto.ReleaseYear" />
                 </div>
                 <div class="pac-form-field">
-                    <label class="pac-label" for="cover">Cover URL</label>
+                    <label class="pac-label" for="cover">URL okładki</label>
                     <input id="cover" class="pac-input" @bind="dto.CoverUrl" />
                 </div>
             </div>
 
+            @* Pole: opis lub notatka o albumie *@
             <div class="pac-form-field">
-                <label class="pac-label" for="desc">Description</label>
+                <label class="pac-label" for="desc">Opis</label>
                 <textarea id="desc" class="pac-input pac-textarea" rows="4" @bind="dto.Description"></textarea>
             </div>
 
+            @* Listy wielokrotnego wyboru artystów i gatunków.
+               selected="@(...)" wstępnie zaznacza opcje zgodnie z danymi albumu.
+               Zmiany obsługiwane przez @onchange, ponieważ @bind nie obsługuje select[multiple]. *@
             <div class="pac-form-row">
                 <div class="pac-form-field">
-                    <label class="pac-label" for="artists">Artists</label>
+                    <label class="pac-label" for="artists">Artyści</label>
                     <select id="artists" class="pac-input pac-multiselect" multiple @onchange="OnArtistsChanged">
                         @foreach (var artist in artists)
                         {
@@ -59,7 +71,7 @@
                     </select>
                 </div>
                 <div class="pac-form-field">
-                    <label class="pac-label" for="genres">Genres</label>
+                    <label class="pac-label" for="genres">Gatunki</label>
                     <select id="genres" class="pac-input pac-multiselect" multiple @onchange="OnGenresChanged">
                         @foreach (var genre in genres)
                         {
@@ -69,29 +81,45 @@
                 </div>
             </div>
 
+            @* Komunikat błędu — widoczny gdy zapis się nie powiedzie *@
             @if (!string.IsNullOrWhiteSpace(errorMessage))
             {
                 <div class="pac-alert pac-alert-danger">@errorMessage</div>
             }
 
+            @* Przyciski akcji: zapis zmian i anulowanie *@
             <div class="pac-form-actions">
-                <button class="pac-btn pac-btn-primary" @onclick="Save">Save changes</button>
-                <a class="pac-btn pac-btn-ghost" href="/albums/@Id">Cancel</a>
+                <button class="pac-btn pac-btn-primary" @onclick="Save">Zapisz zmiany</button>
+                <a class="pac-btn pac-btn-ghost" href="/albums/@Id">Anuluj</a>
             </div>
         </div>
     }
 </AuthGuard>
 
 @code {
+    /// <summary>
+    /// Parametr trasy — Id albumu pobrany z segmentu URL /albums/edit/{Id}.
+    /// </summary>
     [Parameter] public int Id { get; set; }
 
+    // Dane oryginalnego albumu pobrane z serwisu
     private AlbumDetailsDto? album;
+
+    // DTO wypełniany danymi albumu i modyfikowany przez formularz
     private AlbumUpdateDto dto = new();
+
+    // Listy słownikowe do list wielokrotnego wyboru
     private List<ArtistDto> artists = new();
     private List<GenreDto> genres = new();
+
     private bool isLoading = true;
     private string? errorMessage;
 
+    /// <summary>
+    /// Ładuje listę artystów, gatunków i dane albumu przy inicjalizacji.
+    /// Wypełnia dto danymi albumu, aby formularz był wstępnie uzupełniony.
+    /// Pomija ładowanie gdy użytkownik nie jest zalogowany (obsługiwane przez AuthGuard).
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         if (!CurrentUser.IsLoggedIn) return;
@@ -100,6 +128,7 @@
         genres = await GenreService.GetAllAsync();
         album = await AlbumService.GetByIdAsync(Id);
 
+        // Przepisanie danych albumu do dto formularza
         if (album is not null)
         {
             dto.Title = album.Title;
@@ -113,9 +142,22 @@
         isLoading = false;
     }
 
+    /// <summary>
+    /// Obsługuje zmianę zaznaczenia w liście artystów i aktualizuje dto.ArtistIds.
+    /// </summary>
     private void OnArtistsChanged(ChangeEventArgs e) => dto.ArtistIds = GetSelectedIds(e);
+
+    /// <summary>
+    /// Obsługuje zmianę zaznaczenia w liście gatunków i aktualizuje dto.GenreIds.
+    /// </summary>
     private void OnGenresChanged(ChangeEventArgs e) => dto.GenreIds = GetSelectedIds(e);
 
+    /// <summary>
+    /// Wyciąga listę Id zaznaczonych opcji z ChangeEventArgs.
+    /// Obsługuje zarówno wybór pojedynczej wartości (string), jak i wielokrotnego (string[]).
+    /// </summary>
+    /// <param name="e">Argumenty zdarzenia zmiany wartości select.</param>
+    /// <returns>Lista Id zaznaczonych opcji.</returns>
     private static List<int> GetSelectedIds(ChangeEventArgs e)
     {
         if (e.Value is string value && int.TryParse(value, out var singleId))
@@ -125,6 +167,10 @@
         return new List<int>();
     }
 
+    /// <summary>
+    /// Zapisuje zmiany albumu przez AlbumService i przekierowuje na stronę szczegółów.
+    /// Wyświetla komunikat błędu gdy album nie zostanie znaleziony lub serwis rzuci wyjątek.
+    /// </summary>
     private async Task Save()
     {
         errorMessage = null;
@@ -133,7 +179,7 @@
             var updated = await AlbumService.UpdateAsync(Id, dto);
             if (!updated)
             {
-                errorMessage = "Album was not found.";
+                errorMessage = "Nie znaleziono albumu.";
                 return;
             }
             Navigation.NavigateTo($"/albums/{Id}");

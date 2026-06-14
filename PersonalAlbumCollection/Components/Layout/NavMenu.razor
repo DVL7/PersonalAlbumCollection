@@ -1,8 +1,12 @@
-﻿@using PersonalAlbumCollection.Services.Interfaces
+﻿@* NavMenu.razor  *@
+
 @inject ICurrentUserService CurrentUser
 @implements IDisposable
 
+@* Główny kontener bocznego paska *@
 <aside class="pac-sidebar">
+
+    @* Logo i nazwa aplikacji *@
     <div class="pac-brand">
         <div class="pac-logo">◎</div>
         <div>
@@ -11,36 +15,42 @@
         </div>
     </div>
 
+    @* Sekcja nawigacji — linki do albumów, artystów, gatunków i ustawień *@
     <nav class="pac-nav">
-        <div class="pac-nav-section">Library</div>
+        <div class="pac-nav-section">Biblioteka</div>
         <NavLink class="pac-nav-link" href="/albums" Match="NavLinkMatch.Prefix">
-            <span>▦</span> Albums
+            <span>▦</span> Albumy
         </NavLink>
         <NavLink class="pac-nav-link" href="/artists">
-            <span>♙</span> Artists
+            <span>♙</span> Artyści
         </NavLink>
         <NavLink class="pac-nav-link" href="/genres">
-            <span>♫</span> Genres
+            <span>♫</span> Gatunki
         </NavLink>
 
         <div class="pac-nav-divider"></div>
 
-        <div class="pac-nav-section">Settings</div>
+        <div class="pac-nav-section">Ustawienia</div>
         <NavLink class="pac-nav-link" href="/settings">
-            <span>◈</span> Account
+            <span>◈</span> Konto
         </NavLink>
     </nav>
 
+    @* Stopka paska — avatar użytkownika, nazwa i przycisk wylogowania.
+       Widoczna tylko gdy użytkownik jest zalogowany. *@
     <div class="pac-sidebar-user">
         @if (CurrentUser.IsLoggedIn)
         {
+            @* Avatar z inicjałem nazwy użytkownika *@
             <div class="pac-avatar">@GetInitials(CurrentUser.UserName)</div>
             <div class="pac-user-text">
                 <div>@CurrentUser.UserName</div>
+                @* Formularz wylogowania — wysyła żądanie POST do /auth/logout.
+                   data-enhance="false" wyłącza enhanced navigation Blazora dla tego formularza. *@
                 <form class="pac-logout-form" method="post" action="/auth/logout"
                       @formname="logout-form" data-enhance="false">
                     <AntiforgeryToken />
-                    <button class="pac-link-button" type="submit">Log out</button>
+                    <button class="pac-link-button" type="submit">Wyloguj</button>
                 </form>
             </div>
         }
@@ -48,17 +58,31 @@
 </aside>
 
 @code {
+    /// <summary>
+    /// Subskrybuje zdarzenie zmiany stanu użytkownika,
+    /// aby komponent odświeżał się po zalogowaniu lub wylogowaniu.
+    /// </summary>
     protected override void OnInitialized()
     {
         CurrentUser.OnChange += StateHasChanged;
     }
 
+    /// <summary>
+    /// Zwraca pierwszy znak nazwy użytkownika jako inicjał (wielka litera).
+    /// Używane do wyświetlania awatara w stopce paska bocznego.
+    /// </summary>
+    /// <param name="value">Nazwa użytkownika.</param>
+    /// <returns>Inicjał lub "?" gdy wartość jest pusta.</returns>
     private static string GetInitials(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return "?";
         return value.Trim()[0].ToString().ToUpperInvariant();
     }
 
+    /// <summary>
+    /// Usuwa subskrypcję zdarzenia OnChange przy niszczeniu komponentu,
+    /// aby uniknąć wycieków pamięci.
+    /// </summary>
     public void Dispose()
     {
         CurrentUser.OnChange -= StateHasChanged;

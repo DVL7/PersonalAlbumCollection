@@ -1,22 +1,54 @@
+@* ConfirmDialog.razor *@
+
+@* Dialog renderowany tylko gdy IsVisible == true *@
 @if (IsVisible)
 {
+    @* Tło modala — kliknięcie poza oknem wywołuje OnCancel *@
     <div class="pac-dialog-backdrop" @onclick="OnCancel">
+
+        @* Okno dialogowe — stopPropagation zapobiega propagacji kliknięcia do tła *@
         <div class="pac-dialog" @onclick:stopPropagation="true">
             <p class="pac-dialog-title">@Title</p>
             <p class="pac-dialog-message">@Message</p>
+
+            @* Przyciski akcji — potwierdzenie (niebezpieczne) i anulowanie *@
             <div class="pac-dialog-actions">
                 <button class="pac-btn pac-btn-danger" @onclick="OnConfirm">@ConfirmLabel</button>
-                <button class="pac-btn pac-btn-ghost" @onclick="OnCancel">Cancel</button>
+                <button class="pac-btn pac-btn-ghost" @onclick="OnCancel">Anuluj</button>
             </div>
         </div>
+
     </div>
 }
 
 @code {
+    /// <summary>
+    /// Określa, czy dialog jest widoczny.
+    /// </summary>
     [Parameter] public bool IsVisible { get; set; }
-    [Parameter] public string Title { get; set; } = "Are you sure?";
-    [Parameter] public string Message { get; set; } = "This action cannot be undone.";
-    [Parameter] public string ConfirmLabel { get; set; } = "Delete";
+
+    /// <summary>
+    /// Tytuł dialogu wyświetlany pogrubioną czcionką.
+    /// </summary>
+    [Parameter] public string Title { get; set; } = "Czy jesteś pewny?";
+
+    /// <summary>
+    /// Treść komunikatu opisującego skutki operacji.
+    /// </summary>
+    [Parameter] public string Message { get; set; } = "Tej operacji nie można cofnąć.";
+
+    /// <summary>
+    /// Etykieta przycisku potwierdzenia, np. "Usuń" lub "Tak, zmień".
+    /// </summary>
+    [Parameter] public string ConfirmLabel { get; set; } = "Usuń";
+
+    /// <summary>
+    /// Zdarzenie wywoływane po kliknięciu przycisku potwierdzenia.
+    /// </summary>
     [Parameter] public EventCallback OnConfirm { get; set; }
+
+    /// <summary>
+    /// Zdarzenie wywoływane po kliknięciu przycisku anulowania lub tła modala.
+    /// </summary>
     [Parameter] public EventCallback OnCancel { get; set; }
 }

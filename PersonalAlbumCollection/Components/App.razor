@@ -1,24 +1,39 @@
-﻿<!DOCTYPE html>
+﻿@* App.razor *@
+
+<!DOCTYPE html>
 <html lang="pl">
 
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <base href="/"/>
+
+    @* ResourcePreloader — generuje tagi <link rel="preload"> dla zasobów statycznych Blazora *@
     <ResourcePreloader/>
-    
+
+    @* Arkusze stylów: Bootstrap (bazowy reset/grid), style aplikacji i własny motyw PAC *@
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]"/>
     <link rel="stylesheet" href="@Assets["app.css"]"/>
     <link rel="stylesheet" href="css/pac-theme.css" />
     <link rel="stylesheet" href="@Assets["PersonalAlbumCollection.styles.css"]"/>
+
+    @* ImportMap — generuje mapę importów JS dla modułów ESM używanych przez Blazor *@
     <ImportMap/>
+
     <link rel="icon" type="image/png" href="favicon.png"/>
+
+    @* HeadOutlet — punkt montowania dynamicznych elementów <head> (np. <PageTitle>) z widoków *@
     <HeadOutlet/>
 </head>
 
 <body>
+@* Główny router aplikacji — renderowany w trybie InteractiveServer (połączenie SignalR) *@
 <Routes @rendermode="InteractiveServer" />
+
+@* Modal utraty połączenia z serwerem Blazor — zarządzany automatycznie przez framework *@
 <ReconnectModal/>
+
+@* Skrypt uruchamiający Blazor Web — musi być na końcu body *@
 <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 

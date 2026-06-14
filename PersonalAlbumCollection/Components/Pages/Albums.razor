@@ -1,3 +1,5 @@
+@* Albums.razor *@
+
 @page "/albums"
 @rendermode InteractiveServer
 @using PersonalAlbumCollection.DTOs
@@ -5,31 +7,38 @@
 @inject PersonalAlbumCollection.Services.Interfaces.IGenreService GenreService
 @inject ICurrentUserService CurrentUser
 
+@* AuthGuard przekierowuje niezalogowanych użytkowników na stronę logowania *@
 <AuthGuard>
+    @* Nagłówek strony z przyciskiem dodania albumu *@
     <div class="pac-page-header">
         <div>
-            <p class="pac-eyebrow">Library</p>
-            <h2>Albums</h2>
+            <p class="pac-eyebrow">Biblioteka</p>
+            <h2>Albumy</h2>
         </div>
-        <a class="pac-btn pac-btn-primary" href="/albums/create">+ Add album</a>
+        <a class="pac-btn pac-btn-primary" href="/albums/create">+ Dodaj album</a>
     </div>
 
+    @* Stan ładowania — widoczny do momentu pobrania danych *@
     @if (isLoading)
     {
-        <div class="pac-panel">Loading albums...</div>
+        <div class="pac-panel">Ładowanie albumów...</div>
     }
     else
     {
+        @* Karty statystyk biblioteki — albumy, unikalni artyści, gatunki *@
         <div class="pac-stats-grid">
-            <StatCard Label="Albums" Value="@filteredAlbums.Count.ToString()" Subtitle="in library" />
-            <StatCard Label="Artists" Value="@artistCount.ToString()" Subtitle="unique artists" ValueClass="pac-purple" />
-            <StatCard Label="Genres" Value="@genres.Count.ToString()" Subtitle="music genres" ValueClass="pac-yellow" />
+            <StatCard Label="Albumy" Value="@filteredAlbums.Count.ToString()" Subtitle="w bibliotece" />
+            <StatCard Label="Artyści" Value="@artistCount.ToString()" Subtitle="unikalnych artystów" ValueClass="pac-purple" />
+            <StatCard Label="Gatunki" Value="@genres.Count.ToString()" Subtitle="gatunki muzyczne" ValueClass="pac-yellow" />
         </div>
 
+        @* Pasek narzędzi — wyszukiwarka z debounce 300ms i filtr gatunków *@
         <div class="pac-toolbar">
-            <input class="pac-input" placeholder="Search by album or artist" @bind="search" @oninput="OnSearchInput" />
+            @* Pole wyszukiwania — @oninput wywołuje OnSearchInput z opóźnieniem (debounce) *@
+            <input class="pac-input" placeholder="Szukaj po albumie lub artyście" @bind="search" @oninput="OnSearchInput" />
+            @* Filtr gatunków — zmiana wartości natychmiast przeładowuje listę albumów *@
             <select class="pac-input pac-select" @bind="selectedGenreId" @bind:after="LoadAlbums">
-                <option value="">All genres</option>
+                <option value="">Wszystkie gatunki</option>
                 @foreach (var genre in genres)
                 {
                     <option value="@genre.Id">@genre.Name</option>
@@ -37,17 +46,20 @@
             </select>
         </div>
 
+        @* Komunikat błędu — widoczny gdy operacja usuwania się nie powiedzie *@
         @if (!string.IsNullOrWhiteSpace(errorMessage))
         {
             <div class="pac-alert pac-alert-danger">@errorMessage</div>
         }
 
+        @* Lista albumów lub komunikat braku wyników *@
         @if (filteredAlbums.Count == 0)
         {
-            <div class="pac-empty">No albums found.</div>
+            <div class="pac-empty">Nie znaleziono albumów.</div>
         }
         else
         {
+            @* Siatka kart albumów — każda karta umożliwia usunięcie przez callback OnDelete *@
             <div class="pac-album-grid">
                 @foreach (var album in filteredAlbums)
                 {
@@ -57,29 +69,43 @@
         }
     }
 
+    @* Dialog potwierdzenia usunięcia albumu *@
     <ConfirmDialog
         IsVisible="confirmVisible"
-        Title="Delete album"
-        Message="@($"Are you sure you want to delete \"{confirmAlbumTitle}\"? This action cannot be undone.")"
-        ConfirmLabel="Delete"
+        Title="Usuń album"
+        Message="@($"Czy na pewno chcesz usunąć \"{confirmAlbumTitle}\"? Tej operacji nie można cofnąć.")"
+        ConfirmLabel="Usuń"
         OnConfirm="ConfirmDelete"
         OnCancel="CancelDelete" />
 </AuthGuard>
 
 @code {
+    // Lista wszystkich pobranych albumów i albumów po filtracji/wyszukiwaniu
     private List<AlbumListItemDto> albums = new();
     private List<AlbumListItemDto> filteredAlbums = new();
+
+    // Lista gatunków do filtra
     private List<GenreDto> genres = new();
+
+    // Stan pola wyszukiwania i wybranego gatunku
     private string? search;
     private int? selectedGenreId;
+
+    // Liczba unikalnych artystów obliczana z załadowanych albumów
     private int artistCount;
+
     private bool isLoading = true;
     private string? errorMessage;
 
+    // Stan dialogu potwierdzenia usunięcia
     private bool confirmVisible;
     private int? pendingDeleteId;
     private string confirmAlbumTitle = string.Empty;
 
+    /// <summary>
+    /// Ładuje gatunki i albumy po inicjalizacji komponentu.
+    /// Pomija ładowanie gdy użytkownik nie jest zalogowany (obsługiwane przez AuthGuard).
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         if (!CurrentUser.IsLoggedIn) return;
@@ -88,6 +114,10 @@
         isLoading = false;
     }
 
+    /// <summary>
+    /// Pobiera albumy z serwisu z uwzględnieniem aktualnych filtrów (wyszukiwanie, gatunek).
+    /// Oblicza liczbę unikalnych artystów na podstawie załadowanych albumów.
+    /// </summary>
     private async Task LoadAlbums()
     {
         albums = await AlbumService.GetAllAsync(search, selectedGenreId);
@@ -98,6 +128,11 @@
             .Count();
     }
 
+    /// <summary>
+    /// Inicjuje proces usuwania — ustawia tytuł albumu i otwiera dialog potwierdzenia.
+    /// Wywoływane przez callback OnDelete z komponentu AlbumCard.
+    /// </summary>
+    /// <param name="id">Id albumu do usunięcia.</param>
     private void RequestDeleteAlbum(int id)
     {
         var album = albums.FirstOrDefault(a => a.Id == id);
@@ -106,6 +141,10 @@
         confirmVisible = true;
     }
 
+    /// <summary>
+    /// Wykonuje usunięcie albumu po potwierdzeniu przez użytkownika.
+    /// Odświeża listę albumów po operacji.
+    /// </summary>
     private async Task ConfirmDelete()
     {
         confirmVisible = false;
@@ -115,7 +154,7 @@
         try
         {
             var deleted = await AlbumService.DeleteAsync(pendingDeleteId.Value);
-            if (!deleted) errorMessage = "Album was not found.";
+            if (!deleted) errorMessage = "Nie znaleziono albumu.";
             await LoadAlbums();
         }
         catch (Exception ex)
@@ -128,14 +167,23 @@
         }
     }
 
+    /// <summary>
+    /// Anuluje operację usuwania i zamyka dialog potwierdzenia.
+    /// </summary>
     private void CancelDelete()
     {
         confirmVisible = false;
         pendingDeleteId = null;
     }
-    
+
+    // Token anulowania dla debounce wyszukiwania
     private CancellationTokenSource? _searchCts;
 
+    /// <summary>
+    /// Obsługuje zdarzenie wpisywania tekstu w polu wyszukiwania.
+    /// Implementuje debounce 300ms — anuluje poprzednie zadanie i czeka przed wysłaniem zapytania,
+    /// aby nie przeciążać serwera przy każdym naciśnięciu klawisza.
+    /// </summary>
     private async Task OnSearchInput(ChangeEventArgs e)
     {
         search = e.Value?.ToString();

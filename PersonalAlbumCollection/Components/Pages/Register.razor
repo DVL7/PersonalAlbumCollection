@@ -1,3 +1,5 @@
+@* Register.razor *@
+
 @page "/register"
 @layout AuthLayout
 @rendermode InteractiveServer
@@ -5,52 +7,69 @@
 @inject ICurrentUserService CurrentUser
 @inject NavigationManager Navigation
 
+@* Karta formularza rejestracji *@
 <div class="pac-auth-card">
-    <p class="pac-eyebrow">Account</p>
-    <h2>Create account</h2>
+    <p class="pac-eyebrow">Konto</p>
+    <h2>Rejestracja</h2>
 
+    @* Pola formularza — nazwa użytkownika, e-mail, hasło *@
     <div class="pac-form-field">
-        <label class="pac-label" for="userName">User name</label>
+        <label class="pac-label" for="userName">Nazwa użytkownika</label>
         <input id="userName" class="pac-input" @bind="userName" />
     </div>
     <div class="pac-form-field">
-        <label class="pac-label" for="email">Email</label>
+        <label class="pac-label" for="email">E-mail</label>
         <input id="email" class="pac-input" type="email" @bind="email" />
     </div>
     <div class="pac-form-field">
-        <label class="pac-label" for="password">Password</label>
+        <label class="pac-label" for="password">Hasło</label>
         <input id="password" class="pac-input" type="password" @bind="password" />
     </div>
 
-    <button class="pac-btn pac-btn-primary pac-btn-wide" @onclick="Submit">Register</button>
+    @* Przycisk rejestracji — wywołuje metodę Submit *@
+    <button class="pac-btn pac-btn-primary pac-btn-wide" @onclick="Submit">Zarejestruj się</button>
 
+    @* Komunikat błędu rejestracji — widoczny gdy serwis zwróci błąd *@
     @if (!string.IsNullOrWhiteSpace(errorMessage))
     {
         <div class="pac-alert pac-alert-danger">@errorMessage</div>
     }
 
-    <p class="pac-auth-footer">Already have an account? <a href="/login" class="pac-auth-link">Log in</a>.</p>
+    @* Link do logowania dla istniejących użytkowników *@
+    <p class="pac-auth-footer">Masz już konto? <a href="/login" class="pac-auth-link">Zaloguj się</a>.</p>
 </div>
 
 @code {
+    // Pola formularza rejestracji
     private string userName = string.Empty;
     private string email = string.Empty;
     private string password = string.Empty;
+
+    // Komunikat błędu zwrócony przez serwis rejestracji
     private string? errorMessage;
 
+    /// <summary>
+    /// Przy inicjalizacji sprawdza, czy użytkownik jest już zalogowany —
+    /// jeśli tak, przekierowuje na /albums.
+    /// </summary>
     protected override void OnInitialized()
     {
         if (CurrentUser.IsLoggedIn)
             Navigation.NavigateTo("/albums", replace: true);
     }
 
+    /// <summary>
+    /// Obsługuje kliknięcie przycisku rejestracji.
+    /// Wywołuje AuthService.RegisterAsync i przekierowuje na stronę logowania przy sukcesie.
+    /// W przypadku błędu wyświetla komunikat zwrócony przez serwis.
+    /// </summary>
     private async Task Submit()
     {
         errorMessage = null;
         var result = await AuthService.RegisterAsync(userName, email, password);
         if (!result.Success)
         {
-            errorMessage = result.ErrorMessage ?? "Could not register.";
+            errorMessage = result.ErrorMessage ?? "Rejestracja nie powiodła się.";
             return;
         }
         Navigation.NavigateTo("/login?registered=1");

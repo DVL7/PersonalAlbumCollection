@@ -1,12 +1,24 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@* Routes.razor
+   Konfiguracja routingu aplikacji Blazor.
+   Dopasowuje aktualny URL do zarejestrowanych tras w assembly i renderuje odpowiedni widok.
+   Domyślnym layoutem dla stron bez jawnego @layout jest MainLayout.
+   Strona 404 renderowana jest w AuthLayout (bez paska bocznego). *@
+
+<Router AppAssembly="typeof(Program).Assembly">
+
+    @* Trasa znaleziona — renderuje widok z domyślnym layoutem MainLayout.
+       FocusOnNavigate przenosi fokus na pierwszy h1 po nawigacji (dostępność). *@
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
         <FocusOnNavigate RouteData="routeData" Selector="h1"/>
     </Found>
+
+    @* Trasa nieznaleziona (404) — renderuje komponent NotFound w AuthLayout *@
     <NotFound>
-        <PageTitle>Not found</PageTitle>
+        <PageTitle>Nie znaleziono strony</PageTitle>
         <LayoutView Layout="typeof(Layout.AuthLayout)">
             <PersonalAlbumCollection.Components.Pages.Errors.NotFound />
         </LayoutView>
     </NotFound>
+
 </Router>

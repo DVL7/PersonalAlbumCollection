@@ -1,6 +1,11 @@
+@* AuthLayout.razor *@
+
 @inherits LayoutComponentBase
 
+@* Zewnętrzna powłoka layoutu autoryzacyjnego *@
 <div class="pac-auth-shell">
+
+    @* Nagłówek z logiem — klikalny, prowadzi na stronę główną *@
     <div class="pac-auth-brand">
         <a href="/" class="pac-auth-logo">
             <span class="pac-logo">◎</span>
@@ -8,13 +13,16 @@
         </a>
     </div>
 
+    @* Główny obszar treści — renderuje zawartość strony autoryzacyjnej *@
     <main class="pac-auth-main">
         @Body
     </main>
 </div>
 
+@* Pasek błędu Blazora — pojawia się automatycznie przy nieobsłużonym wyjątku po stronie serwera.
+   data-nosnippet zapobiega indeksowaniu tego elementu przez wyszukiwarki. *@
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
+    Wystąpił nieobsługiwany błąd.
+    <a href="." class="reload">Odśwież</a>
     <span class="dismiss">🗙</span>
 </div>

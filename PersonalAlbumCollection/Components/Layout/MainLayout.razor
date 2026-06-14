@@ -1,15 +1,20 @@
+@* MainLayout.razor *@
+
 @using PersonalAlbumCollection.Services.Interfaces
 @inject ICurrentUserService CurrentUser
 @implements IDisposable
 
 @inherits LayoutComponentBase
 
+@* Zewnętrzna powłoka layoutu — flex, zawiera sidebar i główną treść *@
 <div class="pac-shell">
+    @* Boczny pasek nawigacyjny — widoczny tylko dla zalogowanych użytkowników *@
     @if (CurrentUser.IsLoggedIn)
     {
         <NavMenu />
     }
 
+    @* Główny obszar treści strony *@
     <main class="pac-main">
         <section class="pac-content">
             @Body
@@ -17,18 +22,28 @@
     </main>
 </div>
 
+@* Pasek błędu Blazora — pojawia się automatycznie przy nieobsłużonym wyjątku po stronie serwera.
+   data-nosnippet zapobiega indeksowaniu tego elementu przez wyszukiwarki. *@
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
+    Wystąpił nieobsługiwany błąd.
+    <a href="." class="reload">Odśwież</a>
     <span class="dismiss">🗙</span>
 </div>
 
 @code {
+    /// <summary>
+    /// Subskrybuje zdarzenie zmiany stanu użytkownika,
+    /// aby layout odświeżał się po zalogowaniu lub wylogowaniu (np. pokazanie/ukrycie NavMenu).
+    /// </summary>
     protected override void OnInitialized()
     {
         CurrentUser.OnChange += StateHasChanged;
     }
 
+    /// <summary>
+    /// Usuwa subskrypcję zdarzenia OnChange przy niszczeniu komponentu,
+    /// aby uniknąć wycieków pamięci.
+    /// </summary>
     public void Dispose()
     {
         CurrentUser.OnChange -= StateHasChanged;

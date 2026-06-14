@@ -1,3 +1,5 @@
+@* AlbumDetails.razor *@
+
 @page "/albums/{Id:int}"
 @rendermode InteractiveServer
 @using PersonalAlbumCollection.DTOs
@@ -5,33 +7,39 @@
 @inject NavigationManager Navigation
 @inject ICurrentUserService CurrentUser
 
+@* AuthGuard przekierowuje niezalogowanych użytkowników na stronę logowania *@
 <AuthGuard>
+    @* Stany: ładowanie, brak albumu lub właściwa zawartość *@
     @if (isLoading)
     {
-        <div class="pac-panel">Loading album...</div>
+        <div class="pac-panel">Ładowanie albumu...</div>
     }
     else if (album is null)
     {
-        <div class="pac-empty">Album not found.</div>
+        <div class="pac-empty">Nie znaleziono albumu.</div>
     }
     else
     {
+        @* Nagłówek strony z tytułem albumu i przyciskami nawigacji *@
         <div class="pac-page-header">
             <div>
-                <p class="pac-eyebrow">Library</p>
+                <p class="pac-eyebrow">Biblioteka</p>
                 <h2>@album.Title</h2>
             </div>
             <div class="pac-page-header-actions">
-                <a class="pac-btn pac-btn-ghost" href="/albums">← Back</a>
-                <a class="pac-btn pac-btn-outline" href="/albums/edit/@album.Id">Edit</a>
+                <a class="pac-btn pac-btn-ghost" href="/albums">← Wróć</a>
+                <a class="pac-btn pac-btn-outline" href="/albums/edit/@album.Id">Edytuj</a>
             </div>
         </div>
 
+        @* Układ szczegółów: okładka po lewej, informacje po prawej *@
         <div class="pac-details-layout">
+
+            @* Okładka albumu lub placeholder gdy URL okładki jest pusty *@
             <div class="pac-details-cover">
                 @if (!string.IsNullOrWhiteSpace(album.CoverUrl))
                 {
-                    <img src="@album.CoverUrl" alt="@album.Title cover" />
+                    <img src="@album.CoverUrl" alt="Okładka @album.Title" />
                 }
                 else
                 {
@@ -39,9 +47,12 @@
                 }
             </div>
 
+            @* Metadane albumu: artyści, gatunki, rok wydania, data dodania, opis *@
             <div class="pac-details-content">
+                @* Lista artystów oddzielona przecinkami *@
                 <p class="pac-muted pac-artists-line">@string.Join(", ", album.ArtistNames)</p>
 
+                @* Odznaki gatunków muzycznych *@
                 <div class="pac-badges pac-badges-large">
                     @foreach (var genre in album.GenreNames)
                     {
@@ -49,17 +60,19 @@
                     }
                 </div>
 
+                @* Lista definicji: rok wydania i data dodania do biblioteki *@
                 <dl class="pac-details-list">
                     <div>
-                        <dt>Release year</dt>
-                        <dd>@(album.ReleaseYear?.ToString() ?? "Unknown")</dd>
+                        <dt>Rok wydania</dt>
+                        <dd>@(album.ReleaseYear?.ToString() ?? "Nieznany")</dd>
                     </div>
                     <div>
-                        <dt>Added</dt>
+                        <dt>Dodano</dt>
                         <dd>@album.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</dd>
                     </div>
                 </dl>
 
+                @* Opis albumu — widoczny tylko gdy pole jest uzupełnione *@
                 @if (!string.IsNullOrWhiteSpace(album.Description))
                 {
                     <p class="pac-description">@album.Description</p>
@@ -70,11 +83,21 @@
 </AuthGuard>
 
 @code {
+    /// <summary>
+    /// Parametr trasy — Id albumu pobrany z segmentu URL /albums/{Id}.
+    /// </summary>
     [Parameter] public int Id { get; set; }
 
+    // Dane załadowanego albumu (null gdy nie znaleziono)
     private AlbumDetailsDto? album;
+
+    // Flaga stanu ładowania
     private bool isLoading = true;
 
+    /// <summary>
+    /// Pobiera dane albumu o podanym Id przy inicjalizacji komponentu.
+    /// Pomija ładowanie gdy użytkownik nie jest zalogowany (obsługiwane przez AuthGuard).
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         if (!CurrentUser.IsLoggedIn) return;
