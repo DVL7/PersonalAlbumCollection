@@ -8,13 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Components\Shared\" />
       <Folder Include="Data\Configurations\" />
-      <Folder Include="Data\Seed\" />
       <Folder Include="Extensions\" />
-      <Folder Include="Features\Albums\" />
-      <Folder Include="Features\Auth\" />
-      <Folder Include="Features\Ratings\" />
       <Folder Include="Validators\" />
     </ItemGroup>
 
