@@ -16,7 +16,7 @@ public class ArtistUpdateDto
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Typ artysty — solowy (SoloArtist) lub zespół (Band).
+    /// Typ artysty — SoloArtist lub Band.
     /// </summary>
     public ArtistType ArtistType { get; set; }
 
